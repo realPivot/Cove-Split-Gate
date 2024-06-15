@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <../Source/Gate.h>
 using namespace juce;
 using namespace dsp;
 
@@ -63,6 +64,7 @@ private:
     std::atomic<float>* lowRatio = nullptr;
     std::atomic<float>* lowBypass = nullptr;
     std::atomic<float>* lowAttack = nullptr;
+    std::atomic<float>* lowHold = nullptr;
     std::atomic<float>* lowRelease = nullptr;
     
     std::atomic<float>* lowThreshold = nullptr;
@@ -70,10 +72,12 @@ private:
     std::atomic<float>* highAttack = nullptr;
     std::atomic<float>* highRelease = nullptr;
     std::atomic<float>* highRatio = nullptr;
+    std::atomic<float>* highHold = nullptr;
     std::atomic<float>* highThreshold = nullptr;
 
     LinkwitzRileyFilter<float> lp, hp;
-    NoiseGate<float> lowGate, highGate;
+    //NoiseGate<float> lowGate, highGate;
+    Gate lowGate, highGate;
     std::array<AudioBuffer<float>, 2> filterBuffers;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessor)

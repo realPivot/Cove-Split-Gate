@@ -6,6 +6,7 @@
               pluginName="Cove Split Gate" version="0.1">
   <MAINGROUP id="jWMVt6" name="Cove Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
+      <FILE id="mozOSz" name="Gate.h" compile="0" resource="0" file="Source/Gate.h"/>
       <FILE id="rFmtsv" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="lsAIDt" name="PluginProcessor.h" compile="0" resource="0"
