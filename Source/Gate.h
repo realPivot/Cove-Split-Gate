@@ -23,52 +23,34 @@ struct Parameters {
 class Gate
 {
 public:
-	/*
-	void setParameters(const AudioProcessorValueTreeState& apvts, bool isListen)
+	
+	void setParameters(const AudioProcessorValueTreeState& apvts, bool isListen, std::string threshold_str, std::string ratio_str, 
+		std::string attack_str, std::string release_str, std::string hold_str, std::string crossover_str, bool isLow = true)
 	{
-		parameters.threshold = apvts.getRawParameterValue("threshold")->load();
-		parameters.ratio = apvts.getRawParameterValue("ratio")->load();
-		const float inputAttack = apvts.getRawParameterValue("attack")->load() / 1000.0f;
+		parameters.threshold = apvts.getRawParameterValue(threshold_str)->load();
+		parameters.ratio = apvts.getRawParameterValue(ratio_str)->load();
+		const float inputAttack = apvts.getRawParameterValue(attack_str)->load() / 1000.0f;
 		parameters.attackTime = 1.0f - std::exp(-1.0f / (static_cast<float>(sampleRate * inputAttack)));
-		const float inputRelease = apvts.getRawParameterValue("release")->load() / 1000.0f;
+		const float inputRelease = apvts.getRawParameterValue(release_str)->load() / 1000.0f;
 		parameters.releaseTime = 1.0f - std::exp(-1.0f / (static_cast<float>(sampleRate * inputRelease)));
-		const float inputHold = apvts.getRawParameterValue("hold")->load();
+		const float inputHold = apvts.getRawParameterValue(hold_str)->load();
 		parameters.holdTime = static_cast<int>(round(inputHold * sampleRate * 0.001f));
-		parameters.hpfFreq = apvts.getRawParameterValue("hpfFreq")->load();
-		parameters.lpfFreq = apvts.getRawParameterValue("lpfFreq")->load();
-		parameters.filterEnable = apvts.getRawParameterValue("filterEnable")->load();
+
+		if (isLow)
+		{
+			parameters.lpfFreq = apvts.getRawParameterValue(crossover_str)->load();
+			parameters.hpfFreq = 0;
+		}
+		else {
+			parameters.hpfFreq = apvts.getRawParameterValue(crossover_str)->load();
+			parameters.lpfFreq = 20000;
+		}
+
+		parameters.filterEnable = false;
 		parameters.listen = isListen;
 	}
-	*/
+	
 	// Additional functions
-
-	void setAttack(std::atomic<float>* attackMs)
-	{
-		const float inputAttack = attackMs->load() / 1000.0f;
-		parameters.attackTime = 1.0f - std::exp(-1.0f / (static_cast<float>(sampleRate * inputAttack)));
-	}
-
-	void setRelease(std::atomic<float>* releaseMs)
-	{
-		const float inputRelease = releaseMs->load() / 1000.0f;
-		parameters.releaseTime = 1.0f - std::exp(-1.0f / (static_cast<float>(sampleRate * inputRelease)));
-	}
-
-	void setRatio(std::atomic<float>* ratio)
-	{
-		parameters.ratio = ratio->load();
-	}
-
-	void setThreshold(std::atomic<float>* threshold)
-	{
-		parameters.threshold = threshold->load();
-	}
-
-	void setHold(std::atomic<float>* holdTime)
-	{
-		const float inputHold = holdTime->load();
-		parameters.holdTime = static_cast<int>(round(inputHold * sampleRate * 0.001f));
-	}
 
 	void prepare(double newSampleRate, int maxBlockSize)
 	{
@@ -100,32 +82,6 @@ public:
 		applyGainReduction(inputBuffer);
 	}
 
-	template <typename ProcessContext>
-	void process(const ProcessContext& context) noexcept
-	{
-		const auto& inputBlock = context.getInputBlock();
-		auto& outputBlock = context.getOutputBlock();
-		const auto numChannels = outputBlock.getNumChannels();
-		const auto numSamples = outputBlock.getNumSamples();
-
-		jassert(inputBlock.getNumChannels() == numChannels);
-		jassert(inputBlock.getNumSamples() == numSamples);
-
-		sideChainBuffer.makeCopyOf(inputBlock, true);
-		gainReductionBuffer.makeCopyOf(inputBlock, true);
-		if (parameters.listen)
-		{
-			applyListen(inputBlock);
-			return;
-		}
-		if (parameters.filterEnable)
-		{
-			applyFiltersToSideChain();
-		}
-		calculateGainReduction();
-		applyGainReduction(outputBlock);
-
-	}
 
 	std::array<float, numOutputs> getGainReduction()
 	{
@@ -163,7 +119,7 @@ private:
 		}
 		else // gate closing
 		{
-			if (currentHold[channel] < parameters.holdTime) // -> hold
+			if (currentHold[channel] < (parameters.holdTime * (sampleRate * 0.001))) // -> hold for ms
 			{
 				currentHold[channel]++;
 			}
@@ -183,7 +139,7 @@ private:
 			{
 				const float inputSample = Decibels::gainToDecibels(
 					sideChainBuffer.getSample(channel, sample));
-				const float levelUnderThreshold = jmin(inputSample - parameters.threshold, 0.0f);
+				const float levelUnderThreshold = jmin(inputSample - Decibels::gainToDecibels(parameters.threshold), 0.0f);
 				const float newMultiplier = Decibels::decibelsToGain(
 					levelUnderThreshold * (parameters.ratio - 1));
 				applyHisteresis(newMultiplier, channel);

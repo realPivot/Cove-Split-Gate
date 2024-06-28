@@ -25,7 +25,7 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
     auto releaseMsMax = 500.f;
     auto ratioLow = 1.0f;
     auto ratioHigh = 30.0f;
-    auto holdLow = 1.f;
+    auto holdLow = 0.f;
     auto holdHigh = 50.f;
 
     std::vector < std::unique_ptr<RangedAudioParameter>> params;
@@ -37,16 +37,16 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
     params.push_back(std::make_unique<AudioParameterFloat>("crossover", "Crossover Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, calcLogSkew(20.f, 20000.f)), 1000.f, frequencyAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("lowBypass", "Low Bypass", 0, bypassAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.5f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .1f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
     params.push_back(std::make_unique<AudioParameterFloat>("lowRelease", "Low Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, 1.f)));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow + 1.f, holdHigh)), 5.f));
     params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", juce::NormalisableRange<float>(0.f, Decibels::decibelsToGain(12.0f), .000001f , calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
 
     params.push_back(std::make_unique<AudioParameterBool>("highBypass", "High Bypass", 0, bypassAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.5f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .1f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
     params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
-    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, 1.f)));
+    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow+1.f, holdHigh)),5.f));
     params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", juce::NormalisableRange<float>(0.f, Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
     return { params.begin(), params.end() };
 }
@@ -210,6 +210,9 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    auto numSamples = buffer.getNumSamples();
+    auto numChannels = buffer.getNumChannels();
+
     lp.setCutoffFrequency(*crossoverParam);
     hp.setCutoffFrequency(*crossoverParam);
 
@@ -235,28 +238,26 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
 
     // Set Gate Params
     //auto ratio = 2;
-    lowGate.setAttack(lowAttack);
-    lowGate.setRelease(lowRelease);
-    lowGate.setThreshold(lowThreshold);
-    lowGate.setRatio(lowRatio);
-    lowGate.setHold(lowHold);
-    highGate.setAttack(highAttack);
-    highGate.setRelease(highRelease);
-    highGate.setThreshold(highThreshold);
-    highGate.setRatio(highRatio);
-    highGate.setHold(highHold);
-
+    lowGate.setParameters(vts, false, "lowThreshold", "lowRatio", "lowAttack", "lowRelease", "lowHold", "crossover", true);
+    highGate.setParameters(vts, false, "highThreshold", "highRatio", "highAttack", "highRelease", "highHold", "crossover", false);
 
     lp.process(fb0Context);
     hp.process(fb1Context);
-    if (*lowBypass < 0.5f) { lowGate.process(fb0Context); }
-    if (*highBypass < 0.5f) { highGate.process(fb1Context); }
 
-    auto numSamples = buffer.getNumSamples();
-    auto numChannels = buffer.getNumChannels();
+    juce::AudioBuffer<float> lowGateBuffer{ (int)fb0Context.getInputBlock().getNumChannels(), (int)fb0Context.getInputBlock().getNumSamples() };
+    fb0Context.getInputBlock().copyTo(lowGateBuffer);
+    juce::AudioBuffer<float> highGateBuffer{ (int)fb1Context.getInputBlock().getNumChannels(), (int)fb1Context.getInputBlock().getNumSamples() };
+    fb1Context.getInputBlock().copyTo(highGateBuffer);
+
+    if (*lowBypass < 0.5f) { lowGate.process(lowGateBuffer); }
+    if (*highBypass < 0.5f) { highGate.process(highGateBuffer); }
+
+    fb0Context.getOutputBlock().copyFrom(lowGateBuffer);
+    fb1Context.getOutputBlock().copyFrom(highGateBuffer);
 
     buffer.clear();
 
+    // sum filters back together
     auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source)
         {
             for (auto i = 0; i < nc; i++)
@@ -290,6 +291,7 @@ void CoveSplitGateAudioProcessor::getStateInformation (juce::MemoryBlock& destDa
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
+
 
 void CoveSplitGateAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
