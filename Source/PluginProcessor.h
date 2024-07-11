@@ -19,6 +19,17 @@ using namespace dsp;
 class CoveSplitGateAudioProcessor  : public juce::AudioProcessor
 {
 public:
+    enum Band { // to define which band of audio is being referenced
+        low,
+        high
+    };
+
+    enum Channel { // to define which channel of audio is being referenced
+        left,
+        right
+    };
+
+
     //==============================================================================
     CoveSplitGateAudioProcessor();
     ~CoveSplitGateAudioProcessor() override;
@@ -56,6 +67,8 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    float getRmsValue(Channel channel, Band band) const;
+
 private:
     ProcessSpec spec;
     AudioProcessorValueTreeState vts;
@@ -79,6 +92,10 @@ private:
     //NoiseGate<float> lowGate, highGate;
     Gate lowGate, highGate;
     std::array<AudioBuffer<float>, 2> filterBuffers;
+    juce::AudioBuffer<float> lowGateBuffer;
+    juce::AudioBuffer<float> highGateBuffer;
+
+    LinearSmoothedValue<float> lowBandRMSLeft, lowBandRMSRight, highBandRMSLeft, highBandRMSRight;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessor)
 };

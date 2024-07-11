@@ -81,6 +81,16 @@ CoveSplitGateAudioProcessor::CoveSplitGateAudioProcessor()
 
     lp.setType(dsp::LinkwitzRileyFilterType::lowpass);
     hp.setType(dsp::LinkwitzRileyFilterType::highpass);
+
+    //lowBandBalL.setAttackTime(1);
+    //lowBandBalL.setLevelCalculationType(dsp::BallisticsFilterLevelCalculationType::RMS);
+    //lowBandBalL.setReleaseTime(100);
+    
+    //lowBandBalR.setAttackTime(1);
+    //lowBandBalR.setLevelCalculationType(dsp::BallisticsFilterLevelCalculationType::RMS);
+    //lowBandBalR.setReleaseTime(100);
+    
+    
 }
 
 CoveSplitGateAudioProcessor::~CoveSplitGateAudioProcessor()
@@ -152,8 +162,6 @@ void CoveSplitGateAudioProcessor::changeProgramName (int index, const juce::Stri
 //==============================================================================
 void CoveSplitGateAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    
-    
 
     spec.sampleRate = sampleRate;
     spec.numChannels = getNumOutputChannels();
@@ -162,6 +170,7 @@ void CoveSplitGateAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     lp.prepare(spec);
     hp.prepare(spec);
 
+    
     lowGate.prepare(spec.sampleRate, spec.maximumBlockSize);
     highGate.prepare(spec.sampleRate, spec.maximumBlockSize);
 
@@ -170,10 +179,28 @@ void CoveSplitGateAudioProcessor::prepareToPlay (double sampleRate, int samplesP
         buffer.setSize(spec.numChannels, samplesPerBlock);
         buffer.clear();
     }
+    lowGateBuffer.setSize(spec.numChannels, samplesPerBlock);
+    highGateBuffer.setSize(spec.numChannels, samplesPerBlock);
+    lowGateBuffer.clear();
+    highGateBuffer.clear();
+    
+
+
+    lowBandRMSLeft.setCurrentAndTargetValue(-100.f);
+    lowBandRMSRight.setCurrentAndTargetValue(-100.f);
+    highBandRMSLeft.setCurrentAndTargetValue(-100.f);
+    highBandRMSRight.setCurrentAndTargetValue(-100.f);
+
+    
 }
 
 void CoveSplitGateAudioProcessor::releaseResources()
 {
+    lowGateBuffer.clear();
+    highGateBuffer.clear();
+    for (int i = 0; i < filterBuffers.size(); i++) {
+        filterBuffers[i].clear();
+    }
 
 }
 
@@ -232,7 +259,7 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
     auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
 
-    // Context
+    // Contexts
     auto fb0Context = juce::dsp::ProcessContextReplacing<float>(fb0Block);
     auto fb1Context = juce::dsp::ProcessContextReplacing<float>(fb1Block);
 
@@ -244,10 +271,58 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     lp.process(fb0Context);
     hp.process(fb1Context);
 
-    juce::AudioBuffer<float> lowGateBuffer{ (int)fb0Context.getInputBlock().getNumChannels(), (int)fb0Context.getInputBlock().getNumSamples() };
     fb0Context.getInputBlock().copyTo(lowGateBuffer);
-    juce::AudioBuffer<float> highGateBuffer{ (int)fb1Context.getInputBlock().getNumChannels(), (int)fb1Context.getInputBlock().getNumSamples() };
     fb1Context.getInputBlock().copyTo(highGateBuffer);
+
+    //Metering
+    {
+        auto sampleScaler = 0.1f; // amount of samples to skip for the rms value calculation. 0.5 == 50% of the sampleRate (or .5 seconds)
+        auto leniancyScalePercent = 1.3f; // value above current value to ignore updating current value. Ex: 1.25 = 125% of current value. Any value above 125%
+        // will be updated instantly, any value below will be smoothed to.
+
+        lowBandRMSLeft.skip(spec.sampleRate * sampleScaler);
+        lowBandRMSRight.skip(spec.sampleRate * sampleScaler);
+        highBandRMSLeft.skip(spec.sampleRate * sampleScaler);
+        highBandRMSRight.skip(spec.sampleRate * sampleScaler);
+        // Low Band
+        { 
+            // Smooth input low L meter
+            {
+                const auto value = Decibels::gainToDecibels(lowGateBuffer.getRMSLevel(0, 0, numSamples));
+                if (value <= (lowBandRMSLeft.getCurrentValue() * leniancyScalePercent))
+                    lowBandRMSLeft.setTargetValue(value);
+                else
+                    lowBandRMSLeft.setCurrentAndTargetValue(value);
+            }
+            // Smooth input low R meter
+            {
+                const auto value = Decibels::gainToDecibels(lowGateBuffer.getRMSLevel(1, 0, numSamples));
+                if (value <= (lowBandRMSRight.getCurrentValue() * leniancyScalePercent))
+                    lowBandRMSRight.setTargetValue(value);
+                else
+                    lowBandRMSRight.setCurrentAndTargetValue(value);
+            }
+        }
+        // High Band
+        { 
+            // Smooth input high L meter
+            {
+                const auto value = Decibels::gainToDecibels(highGateBuffer.getRMSLevel(0, 0, numSamples));
+                if (value < (highBandRMSLeft.getCurrentValue() * leniancyScalePercent))
+                    highBandRMSLeft.setTargetValue(value);
+                else
+                    highBandRMSLeft.setCurrentAndTargetValue(value);
+            }
+            // Smooth input high R meter
+            {
+                const auto value = Decibels::gainToDecibels(highGateBuffer.getRMSLevel(1, 0, numSamples));
+                if (value < (highBandRMSRight.getCurrentValue() * leniancyScalePercent))
+                    highBandRMSRight.setTargetValue(value);
+                else
+                    highBandRMSRight.setCurrentAndTargetValue(value);
+            }
+        }
+    }
 
     if (*lowBypass < 0.5f) { lowGate.process(lowGateBuffer); }
     if (*highBypass < 0.5f) { highGate.process(highGateBuffer); }
@@ -272,6 +347,26 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
 
 }
 
+float CoveSplitGateAudioProcessor::getRmsValue(Channel channel, Band band) const
+{
+    switch (band) {
+    case CoveSplitGateAudioProcessor::Band::low:
+        if (channel == Channel::left)
+            return lowBandRMSLeft.getCurrentValue();
+        if (channel == Channel::right)
+            return lowBandRMSRight.getCurrentValue();
+        break;
+    case CoveSplitGateAudioProcessor::Band::high:
+        if (channel == Channel::left)
+            return highBandRMSLeft.getCurrentValue();
+        if (channel == Channel::right)
+            return highBandRMSRight.getCurrentValue();
+        break;
+    }
+}
+    
+    
+
 //==============================================================================
 bool CoveSplitGateAudioProcessor::hasEditor() const
 {
@@ -280,8 +375,8 @@ bool CoveSplitGateAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* CoveSplitGateAudioProcessor::createEditor()
 {
-    //return new CoveSplitGateAudioProcessorEditor (*this);
-    return new GenericAudioProcessorEditor(*this); // return generic editor
+    return new CoveSplitGateAudioProcessorEditor (*this);
+    //return new GenericAudioProcessorEditor(*this); // return generic editor
 }
 
 //==============================================================================
