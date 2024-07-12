@@ -13,17 +13,35 @@ typedef CoveSplitGateAudioProcessor::Channel _Channel;
 typedef CoveSplitGateAudioProcessor::Band _Band;
 
 //==============================================================================
-CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor (CoveSplitGateAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGateAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p), vts(p.getVts()),
+    crossoverAttach(*vts.getParameter("crossover"), crossoverSlider),
+    lowBypassAttach(*vts.getParameter("lowBypass"), lowBypassButton),
+    lowThresholdAttach(*vts.getParameter("lowThreshold"), lowThresholdSlider),
+    lowRatioAttach(*vts.getParameter("lowRatio"), lowRatioSlider),
+    lowAttachAttach(*vts.getParameter("lowAttack"), lowAttackSlider),
+    lowReleaseAttach(*vts.getParameter("lowRelease"), lowReleaseSlider),
+    lowHoldAttach(*vts.getParameter("lowHold"), lowHoldSlider),
+    highBypassAttach(*vts.getParameter("highBypass"), highBypassButton),
+    highThresholdAttach(*vts.getParameter("highThreshold"), highThresholdSlider),
+    highRatioAttach(*vts.getParameter("highRatio"), highRatioSlider),
+    highAttachAttach(*vts.getParameter("highAttack"), highAttackSlider),
+    highReleaseAttach(*vts.getParameter("highRelease"), highReleaseSlider),
+    highHoldAttach(*vts.getParameter("highHold"), highHoldSlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400 , 550);
+    setSize(400, 550);
 
+    // Meters
     addAndMakeVisible(lowMeterL);
+    lowMeterL.setThresholdEnabled(true);
     addAndMakeVisible(lowMeterR);
+    lowMeterR.setThresholdEnabled(true);
     addAndMakeVisible(highMeterL);
+    highMeterL.setThresholdEnabled(true);
     addAndMakeVisible(highMeterR);
+    highMeterR.setThresholdEnabled(true);
 
     lowMeterL.setStyle(Gui::Meter::Horizontal);
     lowMeterL.setFillDirection(Gui::Meter::Left);
@@ -33,9 +51,72 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor (CoveSplitG
     highMeterL.setFillDirection(Gui::Meter::Left);
     highMeterR.setStyle(Gui::Meter::Horizontal);
     highMeterR.setFillDirection(Gui::Meter::Left);
-    
 
     startTimerHz(144); // how fast should rms value be updated for meters. Meter framerate updated in meter component.
+
+    // Buttons
+    addAndMakeVisible(lowBypassButton);
+    //lowBypassButton.setButtonText("Bypass");
+
+    addAndMakeVisible(highBypassButton);
+    //highBypassButton.setButtonText("Bypass");
+
+    // Sliders
+    addAndMakeVisible(crossoverSlider);
+    crossoverSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    crossoverSlider.setTextBoxStyle(Slider::TextBoxAbove, false, 85, 20);
+
+    addAndMakeVisible(lowThresholdSlider);
+    lowThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    lowThresholdSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowMeterL.setThresholdValue(lowThresholdSlider.getValue());
+    lowMeterR.setThresholdValue(lowThresholdSlider.getValue());
+    lowThresholdSlider.onValueChange = [this]() {
+        auto x = lowThresholdSlider.getValue();
+        lowMeterL.setThresholdValue(x);
+        lowMeterR.setThresholdValue(x);
+        //DBG(x);
+        };
+
+
+    addAndMakeVisible(lowRatioSlider);
+    lowRatioSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    lowRatioSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+
+    addAndMakeVisible(lowAttackSlider);
+    lowAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    lowAttackSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+
+    addAndMakeVisible(lowReleaseSlider);
+    lowReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    lowReleaseSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+
+    addAndMakeVisible(lowHoldSlider);
+    lowHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    lowHoldSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+
+    addAndMakeVisible(highThresholdSlider);
+    highThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    highThresholdSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+
+    addAndMakeVisible(highRatioSlider);
+    highRatioSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    highRatioSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+
+    addAndMakeVisible(highAttackSlider);
+    highAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    highAttackSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+
+    addAndMakeVisible(highReleaseSlider);
+    highReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    highReleaseSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+
+    addAndMakeVisible(highHoldSlider);
+    highHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+    highHoldSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+
+    
+
 }
 
 CoveSplitGateAudioProcessorEditor::~CoveSplitGateAudioProcessorEditor()
@@ -51,6 +132,10 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
     //g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    
+    // Debug
+    g.setColour(juce::Colours::red);
+    g.drawRect(debugRect);
 }
 
 
@@ -64,12 +149,62 @@ void CoveSplitGateAudioProcessorEditor::timerCallback() {
 void CoveSplitGateAudioProcessorEditor::resized()
 {
     auto area = getBounds();
-    auto header = area.removeFromTop(area.getHeight() / 10);
+    auto verticalSegment = area.getHeight() / 8;
+    auto top = area.removeFromTop(verticalSegment);
+    auto header = area.removeFromTop(verticalSegment);
     auto leftHeader = header.removeFromLeft(header.getWidth() / 2);
     auto rightHeader = header;
-    
+
+    auto topQuarter = top.getWidth() / 4;
+    auto topLeft = top.removeFromLeft(topQuarter);
+    auto topRight = top.removeFromRight(topQuarter);
+
+    auto leftSide = area.removeFromLeft(area.getWidth() / 2);
+    auto rightSide = area;
+
+
+
+    // Top
+    lowBypassButton.setBounds(topLeft.reduced(15).translated(50,10));
+    highBypassButton.setBounds(topRight.reduced(15).transformed(juce::AffineTransform::translation(0, 10)));
+    crossoverSlider.setBounds(top.reduced(2));
+
+    // Meter
     lowMeterL.setBounds(leftHeader.removeFromTop(leftHeader.getHeight() / 2).reduced(2));
     lowMeterR.setBounds(leftHeader.reduced(2));
     highMeterL.setBounds(rightHeader.removeFromTop(rightHeader.getHeight() / 2).reduced(2));
     highMeterR.setBounds(rightHeader.reduced(2));
+
+    // Left
+    const int amountOfLeftComponents = 6;
+    auto heightLeftComponents = leftSide.getHeight() / amountOfLeftComponents;
+    std::array<juce::Rectangle<int>, amountOfLeftComponents> leftComponents;
+
+    for (int i = 0; i < amountOfLeftComponents; i++) {
+        leftComponents[i] = leftSide.removeFromTop(heightLeftComponents);
+    }
+
+    lowThresholdSlider.setBounds(leftComponents[0]);
+    lowRatioSlider.setBounds(leftComponents[1]);
+    lowAttackSlider.setBounds(leftComponents[2]);
+    lowReleaseSlider.setBounds(leftComponents[3]);
+    lowHoldSlider.setBounds(leftComponents[4]);
+
+
+    // Right
+
+    const int amountOfRightComponents = 6;
+    auto heightRightComponents = rightSide.getHeight() / amountOfRightComponents;
+    std::array<juce::Rectangle<int>, amountOfRightComponents> rightComponents;
+
+    for (int i = 0; i < amountOfRightComponents; i++) {
+        rightComponents[i] = rightSide.removeFromTop(heightRightComponents);
+    }
+
+    highThresholdSlider.setBounds(rightComponents[0]);
+    highRatioSlider.setBounds(rightComponents[1]);
+    highAttackSlider.setBounds(rightComponents[2]);
+    highReleaseSlider.setBounds(rightComponents[3]);
+    highHoldSlider.setBounds(rightComponents[4]);
+    
 }
