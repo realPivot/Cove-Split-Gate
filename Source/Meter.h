@@ -20,6 +20,14 @@ namespace Gui
 			Right
 		};
 
+		enum Color
+		{
+			Background,
+			Level,
+			Peak,
+			Threshold
+		};
+
 		Meter() {
 			startTimerHz(refreshRateInHz);
 			isThresholdEnabled = false;
@@ -41,18 +49,18 @@ namespace Gui
 			auto cornerSize = 5.0f; // size of corner
 
 			// Background
-			g.setColour(juce::Colour(209, 222, 222).withBrightness(0.2f));
+			g.setColour(backgroundColour);
 			g.fillRoundedRectangle(bounds, 5.0f);
 
 			// Foreground
-			g.setColour(juce::Colour(209,222,222)); // Color of filled bar
+			g.setColour(levelColour); // Color of filled bar
 
-			const auto scaledX = juce::jmap(level, -80.0f, 0.0f, 0.0f, static_cast<float>(getWidth())); // position for filled levelMeter in x orientation
-			const auto scaledY = juce::jmap(level, -80.0f, 0.0f, 0.0f, static_cast<float>(getHeight())); // position for filled levelMeter in y orientation
-			const auto scaledXPeak = juce::jmap(maxLevel, -80.0f, 0.0f, 0.0f, static_cast<float>(getWidth())); // position for peak in x orientation
-			const auto scaledYPeak = juce::jmap(maxLevel, -80.0f, 0.0f, 0.0f, static_cast<float>(getHeight())); // position for filled levelMeter in y orientation
+			const auto scaledX = juce::jmap(level, -80.0f, 12.f, 0.0f, static_cast<float>(getWidth())); // position for filled levelMeter in x orientation
+			const auto scaledY = juce::jmap(level, -80.0f, 12.f, 0.0f, static_cast<float>(getHeight())); // position for filled levelMeter in y orientation
+			const auto scaledXPeak = juce::jmap(maxLevel, -80.0f, 12.f, 0.0f, static_cast<float>(getWidth())); // position for peak in x orientation
+			const auto scaledYPeak = juce::jmap(maxLevel, -80.0f, 12.f, 0.0f, static_cast<float>(getHeight())); // position for filled levelMeter in y orientation
 			const auto jmapThresholdX = juce::jmap(thresholdValue, 0.0f, static_cast<float>(getWidth())); // position for threshold value in x orientation
-			const auto jmapThresholdY = juce::jmap(thresholdValue, -80.f, 0.0f, 0.0f, static_cast<float>(getHeight())); // position for threshold value in y orientation
+			const auto jmapThresholdY = juce::jmap(thresholdValue, 0.0f, static_cast<float>(getHeight())); // position for threshold value in y orientation
 			thresholdX = jmapThresholdX;
 
 
@@ -60,49 +68,74 @@ namespace Gui
 			switch (meterStyle)
 			{
 			case MeterStyle::Horizontal:
-				
+			{
+				// Fill Direction: Left
 				if (fillDirection == FillDirection::Left)
 				{
 					auto bounds2 = bounds; // copy area of bounds into second object to get peak
-					auto thresholdBounds = bounds;
+					auto thresholdBounds = bounds; // copy bounds into third object
 					auto filledBounds = bounds.removeFromLeft(scaledX); // remove filled meter area from bounds object
 					auto peakBounds = bounds2.removeFromLeft(scaledXPeak); // remove peak area from copied bounds object
 
-					// Background
-					thresholdBounds = thresholdBounds.removeFromLeft(jmapThresholdX);
+					g.setColour(levelColour); // Color of filled bar
+					g.fillRoundedRectangle(filledBounds, cornerSize); // fill foreground (filled) bar
+
+					thresholdBounds = thresholdBounds.removeFromLeft(jmapThresholdX * .85f); // remove filled threshold bounds from itself (and scale threshold by amount)
 					if (isThresholdEnabled) {
-						g.setColour(juce::Colours::red.withAlpha(.2f));
-						g.fillRoundedRectangle(thresholdBounds, cornerSize);
+						g.setColour(thresholdColour); // set colour of threshold bar
+						thresholdBounds = thresholdBounds.constrainedWithin(filledBounds); // constrain threshold bar to filled bar
+						g.fillRoundedRectangle(thresholdBounds, cornerSize); // draw threshold bar
 					}
 
-					g.setColour(juce::Colour(209, 222, 222)); // Color of filled bar
-					g.fillRoundedRectangle(filledBounds, cornerSize);
-					g.setColour(juce::Colour(29, 32, 31)); // Color of peak bar
-					g.fillRect(peakBounds.getRight(), peakBounds.getY(), 2.f, bounds.getHeight());
-					
-					
+					g.setColour(peakColour); // Color of peak bar
+					g.fillRect(peakBounds.getRight(), peakBounds.getY(), 2.f, bounds.getHeight()); // draw peak bar
+
+
 				}
+				// Fill Direction: Right
 				else if (fillDirection == FillDirection::Right) {
 					auto bounds2 = bounds; // copy area of bounds into second object to get peak
+					auto thresholdBounds = bounds; // copy bounds into third object
 					auto filledBounds = bounds.removeFromRight(scaledX); // remove filled meter area from bounds object
 					auto peakBounds = bounds2.removeFromRight(scaledXPeak);// remove peak area from copied bounds object
 
-					g.fillRoundedRectangle(filledBounds, cornerSize);
-					g.setColour(juce::Colour(29, 32, 31)); // Color of peak bar
+					g.setColour(levelColour); // Color of filled bar
+					g.fillRoundedRectangle(filledBounds, cornerSize); // fill foreground (filled) bar
+
+					thresholdBounds = thresholdBounds.removeFromRight(jmapThresholdX * .85f); // remove filled threshold bounds from itself (and scale threshold by amount)
+					if (isThresholdEnabled) {
+						g.setColour(thresholdColour); // set colour of threshold bar
+						thresholdBounds = thresholdBounds.constrainedWithin(filledBounds); // constrain threshold bar to filled bar
+						g.fillRoundedRectangle(thresholdBounds, cornerSize); // draw threshold bar
+					}
+
+					g.setColour(peakColour); // Color of peak bar
 					g.fillRect(peakBounds.getX(), peakBounds.getY(), 2.f, bounds.getHeight());
 
 				}
 				break;
-
+			}
 			case MeterStyle::Vertical:
+			{
 				auto bounds2 = bounds; // copy area of bounds into second object to get peak
+				auto thresholdBounds = bounds; // copy bounds into third object
 				auto filledBounds = bounds.removeFromBottom(scaledY); // remove filled meter area from bounds object
 				auto peakBounds = bounds2.removeFromBottom(scaledYPeak); // remove peak area from copied bounds object
 
-				g.fillRoundedRectangle(filledBounds, cornerSize);
-				g.setColour(juce::Colour(29, 32, 31)); // Color of peak bar
-				g.fillRect(peakBounds.getX(), peakBounds.getY(), bounds.getWidth(), 2.f);
+				g.setColour(levelColour); // Color of filled bar
+				g.fillRoundedRectangle(filledBounds, cornerSize);  // fill foreground (filled) bar
+
+				thresholdBounds = thresholdBounds.removeFromBottom(jmapThresholdY * .85f); // remove filled threshold bounds from itself (and scale threshold by amount)
+				if (isThresholdEnabled) {
+					g.setColour(thresholdColour); // set colour of threshold bar
+					thresholdBounds = thresholdBounds.constrainedWithin(filledBounds); // constrain threshold bar to filled bar
+					g.fillRoundedRectangle(thresholdBounds, cornerSize); // draw threshold bar
+				}
+
+				g.setColour(peakColour); // Color of peak bar
+				g.fillRect(peakBounds.getX(), peakBounds.getY(), bounds.getWidth(), 2.f);  // draw peak bar
 				break;
+			}
 			}
 			
 		}
@@ -167,6 +200,24 @@ namespace Gui
 			return (std::log10f(valueInLogRange) - logMin) / (logMax - logMin);
 		}
 
+		void setColour(Color id, juce::Colour newColour) {
+			switch (id)
+			{
+			case Color::Background:
+				backgroundColour = newColour;
+				break;
+			case Color::Level:
+				levelColour = newColour;
+				break;
+			case Color::Peak:
+				peakColour = newColour;
+				break;
+			case Color::Threshold:
+				thresholdColour = newColour;
+				break;
+			}
+		}
+
 	private:
 		bool isThresholdEnabled = false;
 		float level = -80.0f;
@@ -177,5 +228,10 @@ namespace Gui
 		int fillDirection = 0;
 		int refreshRateInHz = 30;
 		int timerIterator = 0;
+
+		juce::Colour backgroundColour = juce::Colour(209, 222, 222).withBrightness(.2f);
+		juce::Colour levelColour = juce::Colour(209, 222, 222);
+		juce::Colour thresholdColour = juce::Colours::darkred.darker(.4f).withAlpha(.4f);
+		juce::Colour peakColour = juce::Colour(29, 32, 31);
 	};
 }

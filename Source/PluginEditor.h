@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "Meter.h"
+#include "CoveLookAndFeel.h"
 
 //==============================================================================
 /**
@@ -30,6 +31,9 @@ public:
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
     AudioProcessorValueTreeState& vts;
+    CoveLookAndFeel coveLNF;
+    ComponentBoundsConstrainer constrainer;
+
     Gui::Meter lowMeterL, lowMeterR, highMeterL, highMeterR;
 
     juce::Rectangle<int> debugRect;
@@ -72,11 +76,6 @@ private:
 
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
-
-    
-
-    int timerIterator = 0; // iterator for timer callback.
-    float resetPeakTimeInSeconds = 1.f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessorEditor)
 };

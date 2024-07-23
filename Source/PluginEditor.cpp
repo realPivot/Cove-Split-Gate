@@ -29,6 +29,8 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     highReleaseAttach(*vts.getParameter("highRelease"), highReleaseSlider),
     highHoldAttach(*vts.getParameter("highHold"), highHoldSlider)
 {
+    setLookAndFeel(&coveLNF);
+
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize(400, 550);
@@ -56,10 +58,54 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 
     // Buttons
     addAndMakeVisible(lowBypassButton);
-    //lowBypassButton.setButtonText("Bypass");
-
+    lowBypassButton.onStateChange = [this]() {
+        auto state = lowBypassButton.getToggleState();
+        switch (state) {
+        case true:
+            lowMeterL.setThresholdEnabled(false);
+            lowMeterR.setThresholdEnabled(false);
+            lowThresholdSlider.setEnabled(false);
+            lowRatioSlider.setEnabled(false);
+            lowAttackSlider.setEnabled(false);
+            lowReleaseSlider.setEnabled(false);
+            lowHoldSlider.setEnabled(false);
+            break;
+        case false:
+            lowMeterL.setThresholdEnabled(true);
+            lowMeterR.setThresholdEnabled(true);
+            lowThresholdSlider.setEnabled(true);
+            lowRatioSlider.setEnabled(true);
+            lowAttackSlider.setEnabled(true);
+            lowReleaseSlider.setEnabled(true);
+            lowHoldSlider.setEnabled(true);
+            break;
+        }
+        };
+        
     addAndMakeVisible(highBypassButton);
-    //highBypassButton.setButtonText("Bypass");
+    highBypassButton.onStateChange = [this]() {
+        auto state = highBypassButton.getToggleState();
+        switch (state) {
+        case true:
+            highMeterL.setThresholdEnabled(false);
+            highMeterR.setThresholdEnabled(false);
+            highThresholdSlider.setEnabled(false);
+            highRatioSlider.setEnabled(false);
+            highAttackSlider.setEnabled(false);
+            highReleaseSlider.setEnabled(false);
+            highHoldSlider.setEnabled(false);
+            break;
+        case false:
+            highMeterL.setThresholdEnabled(true);
+            highMeterR.setThresholdEnabled(true);
+            highThresholdSlider.setEnabled(true);
+            highRatioSlider.setEnabled(true);
+            highAttackSlider.setEnabled(true);
+            highReleaseSlider.setEnabled(true);
+            highHoldSlider.setEnabled(true);
+            break;
+        }
+        };
 
     // Sliders
     addAndMakeVisible(crossoverSlider);
@@ -69,14 +115,6 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     addAndMakeVisible(lowThresholdSlider);
     lowThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     lowThresholdSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
-    lowMeterL.setThresholdValue(lowThresholdSlider.getValue());
-    lowMeterR.setThresholdValue(lowThresholdSlider.getValue());
-    lowThresholdSlider.onValueChange = [this]() {
-        auto x = lowThresholdSlider.getValue();
-        lowMeterL.setThresholdValue(x);
-        lowMeterR.setThresholdValue(x);
-        //DBG(x);
-        };
 
 
     addAndMakeVisible(lowRatioSlider);
@@ -134,8 +172,8 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     //g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
     
     // Debug
-    g.setColour(juce::Colours::red);
-    g.drawRect(debugRect);
+    //g.setColour(juce::Colours::red);
+    //g.drawRect(debugRect);
 }
 
 
@@ -144,6 +182,14 @@ void CoveSplitGateAudioProcessorEditor::timerCallback() {
     lowMeterR.setLevel(audioProcessor.getRmsValue(_Channel::right, _Band::low));
     highMeterL.setLevel(audioProcessor.getRmsValue(_Channel::left, _Band::high));
     highMeterR.setLevel(audioProcessor.getRmsValue(_Channel::right, _Band::high));
+
+    auto lowSliderValue = lowThresholdSlider.getValue();
+    lowMeterL.setThresholdValue(lowSliderValue);
+    lowMeterR.setThresholdValue(lowSliderValue);
+
+    auto highSliderValue = highThresholdSlider.getValue();
+    highMeterL.setThresholdValue(highSliderValue);
+    highMeterR.setThresholdValue(highSliderValue);
 }
 
 void CoveSplitGateAudioProcessorEditor::resized()
