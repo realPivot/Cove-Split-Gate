@@ -19,35 +19,39 @@ float calcLogSkew(float min, float max) // skew factor algorithm from jucestepby
 }
 
 AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
-    auto attackMsMin = .1f;
+    auto attackMsMin = .3f;
     auto attackMsMax = 200.f;
     auto releaseMsMin = 1.f;
     auto releaseMsMax = 500.f;
     auto ratioLow = 1.0f;
     auto ratioHigh = 30.0f;
-    auto holdLow = 0.f;
+    auto holdLow = 0.5f;
     auto holdHigh = 50.f;
 
     std::vector < std::unique_ptr<RangedAudioParameter>> params;
 
-    auto frequencyAttribute = AudioParameterFloatAttributes().withLabel("hz");
-    auto thresholdAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { return Decibels::toString(Decibels::gainToDecibels(x), 2, -80.f, false); }).withLabel("db");
+    auto frequencyAttribute = AudioParameterFloatAttributes();
+
+    auto thresholdAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { 
+        auto thresholdString = Decibels::toString(Decibels::gainToDecibels(x), 2, -80.f, false);
+        return thresholdString + " dB"; });
+
     auto bypassAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "On" : "Off"; });
 
     params.push_back(std::make_unique<AudioParameterFloat>("crossover", "Crossover Frequency", juce::NormalisableRange<float>(20.f, 20000.f, .01f, calcLogSkew(50.f, 20000.f)), 1000.f, frequencyAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("lowBypass", "Low Bypass", 0, bypassAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.5f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
     params.push_back(std::make_unique<AudioParameterFloat>("lowRelease", "Low Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
     params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow + 1.f, holdHigh)), 5.f));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", juce::NormalisableRange<float>(0.f, Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
 
     params.push_back(std::make_unique<AudioParameterBool>("highBypass", "High Bypass", 0, bypassAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.5f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
+    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
     params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
     params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
     params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow+1.f, holdHigh)),5.f));
-    params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", juce::NormalisableRange<float>(0.f, Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
     return { params.begin(), params.end() };
 }
 

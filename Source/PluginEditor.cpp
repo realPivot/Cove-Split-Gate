@@ -29,7 +29,9 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     highReleaseAttach(*vts.getParameter("highRelease"), highReleaseSlider),
     highHoldAttach(*vts.getParameter("highHold"), highHoldSlider)
 {
-    setLookAndFeel(&coveLNF);
+    //setLookAndFeel(&coveLNF);
+    LookAndFeel::setDefaultLookAndFeel(&coveLNF);
+
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -58,107 +60,152 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 
     // Buttons
     addAndMakeVisible(lowBypassButton);
+    auto lowBypassValue = (*vts.getRawParameterValue("lowBypass") >= 0.5f) ? true : false;
+    lowBypassButton.setToggleState(lowBypassValue, juce::dontSendNotification);
+    lowBypassValue ? setGateState(LowBand, false) : setGateState(LowBand, true);
     lowBypassButton.onStateChange = [this]() {
         auto state = lowBypassButton.getToggleState();
         switch (state) {
         case true:
-            lowMeterL.setThresholdEnabled(false);
-            lowMeterR.setThresholdEnabled(false);
-            lowThresholdSlider.setEnabled(false);
-            lowRatioSlider.setEnabled(false);
-            lowAttackSlider.setEnabled(false);
-            lowReleaseSlider.setEnabled(false);
-            lowHoldSlider.setEnabled(false);
+            setGateState(GateBand::LowBand, false);
             break;
         case false:
-            lowMeterL.setThresholdEnabled(true);
-            lowMeterR.setThresholdEnabled(true);
-            lowThresholdSlider.setEnabled(true);
-            lowRatioSlider.setEnabled(true);
-            lowAttackSlider.setEnabled(true);
-            lowReleaseSlider.setEnabled(true);
-            lowHoldSlider.setEnabled(true);
+            setGateState(GateBand::LowBand, true);
             break;
         }
         };
+    
         
     addAndMakeVisible(highBypassButton);
-    highBypassButton.onStateChange = [this]() {
+    auto highBypassValue = (*vts.getRawParameterValue("highBypass") >= 0.5f) ? true : false;
+    highBypassButton.setToggleState(highBypassValue, juce::dontSendNotification);
+    highBypassValue ? setGateState(HighBand, false) : setGateState(HighBand, true);
+    highBypassButton.onClick = [this]() {
         auto state = highBypassButton.getToggleState();
         switch (state) {
         case true:
-            highMeterL.setThresholdEnabled(false);
-            highMeterR.setThresholdEnabled(false);
-            highThresholdSlider.setEnabled(false);
-            highRatioSlider.setEnabled(false);
-            highAttackSlider.setEnabled(false);
-            highReleaseSlider.setEnabled(false);
-            highHoldSlider.setEnabled(false);
+            setGateState(GateBand::HighBand, false);
             break;
         case false:
-            highMeterL.setThresholdEnabled(true);
-            highMeterR.setThresholdEnabled(true);
-            highThresholdSlider.setEnabled(true);
-            highRatioSlider.setEnabled(true);
-            highAttackSlider.setEnabled(true);
-            highReleaseSlider.setEnabled(true);
-            highHoldSlider.setEnabled(true);
+            setGateState(GateBand::HighBand, true);
             break;
         }
         };
-
+    
     // Sliders
+    auto smallSliderTextBoxWidth = 70;
+    auto bigSliderTextBoxWidth = 105;
+    auto textBoxHeight = 20;
+
     addAndMakeVisible(crossoverSlider);
     crossoverSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    crossoverSlider.setTextBoxStyle(Slider::TextBoxAbove, false, 85, 20);
+    crossoverSlider.setTextBoxStyle(Slider::TextBoxAbove, false, bigSliderTextBoxWidth, textBoxHeight);
+    crossoverSlider.setNumDecimalPlacesToDisplay(0);
+    crossoverSlider.setTextValueSuffix(" hz");
 
     addAndMakeVisible(lowThresholdSlider);
     lowThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    lowThresholdSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowThresholdSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
 
 
     addAndMakeVisible(lowRatioSlider);
     lowRatioSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    lowRatioSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowRatioSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(lowAttackSlider);
     lowAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    lowAttackSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowAttackSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(lowReleaseSlider);
     lowReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    lowReleaseSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowReleaseSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(lowHoldSlider);
     lowHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    lowHoldSlider.setTextBoxStyle(Slider::TextBoxRight, false, 70, 20);
+    lowHoldSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(highThresholdSlider);
     highThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    highThresholdSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+    highThresholdSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(highRatioSlider);
     highRatioSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    highRatioSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+    highRatioSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(highAttackSlider);
     highAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    highAttackSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+    highAttackSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(highReleaseSlider);
     highReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    highReleaseSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+    highReleaseSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
 
     addAndMakeVisible(highHoldSlider);
     highHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-    highHoldSlider.setTextBoxStyle(Slider::TextBoxLeft, false, 70, 20);
+    highHoldSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
 
+    // Labels
+    addAndMakeVisible(crossoverLabel);
+    crossoverLabel.setText("Crossover", dontSendNotification);
+    crossoverLabel.setJustificationType(Justification::centredBottom);
+    crossoverLabel.setInterceptsMouseClicks(false, false);
+
+    addAndMakeVisible(thresholdLabel);
+    thresholdLabel.setText("Threshold", dontSendNotification);
+    thresholdLabel.setJustificationType(juce::Justification::centredTop);
+    thresholdLabel.setInterceptsMouseClicks(false, false);
+
+    addAndMakeVisible(ratioLabel);
+    ratioLabel.setText("Ratio", dontSendNotification);
+    ratioLabel.setJustificationType(juce::Justification::centredTop);
+    ratioLabel.setInterceptsMouseClicks(false, false);
+
+    addAndMakeVisible(attackLabel);
+    attackLabel.setText("Attack", dontSendNotification);
+    attackLabel.setJustificationType(juce::Justification::centredTop);
+    attackLabel.setInterceptsMouseClicks(false, false);
+
+    addAndMakeVisible(releaseLabel);
+    releaseLabel.setText("Release", dontSendNotification);
+    releaseLabel.setJustificationType(juce::Justification::centredTop);
+    releaseLabel.setInterceptsMouseClicks(false, false);
     
+    addAndMakeVisible(holdLabel);
+    holdLabel.setText("Hold", dontSendNotification);
+    holdLabel.setJustificationType(juce::Justification::centredTop);
+    holdLabel.setInterceptsMouseClicks(false, false);
 
 }
 
 CoveSplitGateAudioProcessorEditor::~CoveSplitGateAudioProcessorEditor()
 {
+    LookAndFeel::setDefaultLookAndFeel(nullptr);
+}
+
+void CoveSplitGateAudioProcessorEditor::setGateState(GateBand band, bool state /*Value to set for the band*/) {
+    switch (band)
+    {
+    case GateBand::LowBand:
+        lowMeterL.setThresholdEnabled(state);
+        lowMeterR.setThresholdEnabled(state);
+        lowThresholdSlider.setEnabled(state);
+        lowRatioSlider.setEnabled(state);
+        lowAttackSlider.setEnabled(state);
+        lowReleaseSlider.setEnabled(state);
+        lowHoldSlider.setEnabled(state);
+        break;
+
+    case GateBand::HighBand:
+        highMeterL.setThresholdEnabled(state);
+        highMeterR.setThresholdEnabled(state);
+        highThresholdSlider.setEnabled(state);
+        highRatioSlider.setEnabled(state);
+        highAttackSlider.setEnabled(state);
+        highReleaseSlider.setEnabled(state);
+        highHoldSlider.setEnabled(state);
+        break;
+    }
+
 }
 
 //==============================================================================
@@ -174,6 +221,19 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     // Debug
     //g.setColour(juce::Colours::red);
     //g.drawRect(debugRect);
+
+    // Debug
+    
+    g.setColour(juce::Colours::red);
+    g.drawLine(getWidth() / 4.f, getHeight(), getWidth() / 4.f, 0, 1.f); // Draw 25% Vertical Line
+    g.drawLine(getWidth() / 2.f, getHeight(), getWidth() / 2.f, 0, 1.f); // Draw Center Vertical Line
+    g.drawLine((getWidth() / 4.f) * 3.f, getHeight(), (getWidth() / 4.f) * 3.f, 0, 1.f); // Draw 75% Vertical Line
+    g.drawLine(getWidth(), getHeight() / 2.f, 0, getHeight() / 2.f, 1.f); // Draw Center Horizontal Line
+
+    g.setColour(juce::Colours::pink);
+    g.drawLine(debugRect.getWidth() / 2.f, getHeight(), debugRect.getWidth() / 2.f, 0, 1.f); // Draw Vertical Line halfway in left component
+    g.drawLine(debugRect_2.getX() + (debugRect_2.getWidth() / 2), getHeight(), debugRect_2.getX() + (debugRect_2.getWidth() / 2), 0, 1.f); // Draw Vertical line halfway in right component
+    
 }
 
 
@@ -211,8 +271,8 @@ void CoveSplitGateAudioProcessorEditor::resized()
 
 
     // Top
-    lowBypassButton.setBounds(topLeft.reduced(15).translated(50,10));
-    highBypassButton.setBounds(topRight.reduced(15).transformed(juce::AffineTransform::translation(0, 10)));
+    lowBypassButton.setBounds(topLeft.reduced(15).translated(32,10));
+    highBypassButton.setBounds(topRight.reduced(15).transformed(juce::AffineTransform::translation(13, 10)));
     crossoverSlider.setBounds(top.reduced(2));
 
     // Meter
@@ -236,6 +296,9 @@ void CoveSplitGateAudioProcessorEditor::resized()
     lowReleaseSlider.setBounds(leftComponents[3]);
     lowHoldSlider.setBounds(leftComponents[4]);
 
+    // Debug
+    debugRect = leftComponents[0];
+    debugRect.removeFromRight(lowThresholdSlider.getTextBoxWidth() + (coveLNF.getSliderThumbRadius(lowThresholdSlider) / 5));
 
     // Right
 
@@ -252,5 +315,26 @@ void CoveSplitGateAudioProcessorEditor::resized()
     highAttackSlider.setBounds(rightComponents[2]);
     highReleaseSlider.setBounds(rightComponents[3]);
     highHoldSlider.setBounds(rightComponents[4]);
+
+    // Debug
+    debugRect_2 = rightComponents[0];
+    debugRect_2.removeFromLeft(coveLNF.getSliderLayout(highThresholdSlider).textBoxBounds.getWidth());
+
+    // Labels
+    auto textTop = getBounds().removeFromTop(verticalSegment);
+    auto bottom = getBounds().removeFromBottom(verticalSegment * 6);
+    auto heightTextComponents = bottom.getHeight() / (jmax(amountOfLeftComponents, amountOfRightComponents) * 2);
+    std::array <juce::Rectangle<int>, jmax(amountOfLeftComponents, amountOfRightComponents) * 2> textComponents;
+    for (int i = 0; i < textComponents.size(); i++) {
+        textComponents[i] = bottom.removeFromTop(heightTextComponents);
+    }
+    crossoverLabel.setBounds(textTop);
+    thresholdLabel.setBounds(textComponents[0]);
+    ratioLabel.setBounds(textComponents[2]);
+    attackLabel.setBounds(textComponents[4]);
+    releaseLabel.setBounds(textComponents[6]);
+    holdLabel.setBounds(textComponents[8]);
+
+    
     
 }

@@ -6,6 +6,22 @@
               pluginName="Cove Split Gate" version="0.1">
   <MAINGROUP id="jWMVt6" name="Cove Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
+      <GROUP id="{781E794C-21E6-7E7D-607F-DBD4E00228C4}" name="BinaryData">
+        <GROUP id="{55FA22CD-429B-2481-BEAB-4C9E193D9E5F}" name="Fonts">
+          <FILE id="EHV1kR" name="NotoSans-ExtraBold.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-ExtraBold.ttf"/>
+          <FILE id="TB0jmf" name="NotoSans-Light.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-Light.ttf"/>
+          <FILE id="Efyxpd" name="NotoSans-Medium.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-Medium.ttf"/>
+          <FILE id="xy0TRv" name="NotoSans-Regular.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-Regular.ttf"/>
+          <FILE id="EGD1Iw" name="NotoSans-SemiBold.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-SemiBold.ttf"/>
+          <FILE id="bJK1X9" name="NotoSans-Thin.ttf" compile="0" resource="1"
+                file="C:/Users/tjbac/Downloads/Noto_Sans/static/NotoSans-Thin.ttf"/>
+        </GROUP>
+      </GROUP>
       <GROUP id="{B82166A0-4F74-E4CF-A78D-242301A92CD2}" name="Components">
         <FILE id="Z4imfG" name="Meter.h" compile="0" resource="0" file="Source/Meter.h"/>
       </GROUP>

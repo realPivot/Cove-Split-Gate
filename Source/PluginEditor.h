@@ -19,6 +19,12 @@
 class CoveSplitGateAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 {
 public:
+    enum GateBand
+    {
+        LowBand,
+        HighBand
+    };
+
     CoveSplitGateAudioProcessorEditor (CoveSplitGateAudioProcessor&);
     ~CoveSplitGateAudioProcessorEditor() override;
 
@@ -28,6 +34,8 @@ public:
 
     void timerCallback() override;
 
+    void setGateState(GateBand band, bool state);
+
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
     AudioProcessorValueTreeState& vts;
@@ -36,7 +44,7 @@ private:
 
     Gui::Meter lowMeterL, lowMeterR, highMeterL, highMeterR;
 
-    juce::Rectangle<int> debugRect;
+    juce::Rectangle<int> debugRect, debugRect_2;
 
     juce::Slider crossoverSlider;
     juce::SliderParameterAttachment crossoverAttach;
@@ -76,6 +84,13 @@ private:
 
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
+
+    juce::Label thresholdLabel;
+    juce::Label attackLabel;
+    juce::Label releaseLabel;
+    juce::Label ratioLabel;
+    juce::Label holdLabel;
+    juce::Label crossoverLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessorEditor)
 };
