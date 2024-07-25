@@ -31,7 +31,24 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 {
     //setLookAndFeel(&coveLNF);
     LookAndFeel::setDefaultLookAndFeel(&coveLNF);
+    coveLNF.setColour(ResizableWindow::backgroundColourId, _Isabelline);
+    
+    coveLNF.setColour(TextEditor::ColourIds::backgroundColourId, _PaleDogwood);
+    coveLNF.setColour(Slider::ColourIds::trackColourId, _PaleDogwood);
+    coveLNF.setColour(Slider::ColourIds::textBoxBackgroundColourId, _PaleDogwood);
+    coveLNF.setColour(Slider::ColourIds::textBoxOutlineColourId, _PaleDogwood);
+    
+    coveLNF.setColour(Slider::backgroundColourId, _RoseQuartz);
+    
+        coveLNF.setColour(Slider::thumbColourId, _UltraViolet);
+    coveLNF.setColour(ToggleButton::tickColourId, _UltraViolet);
 
+    coveLNF.setColour(Label::textColourId, _SpaceCadet);
+    coveLNF.setColour(TextEditor::textColourId, _SpaceCadet);
+    coveLNF.setColour(Slider::ColourIds::textBoxTextColourId, _SpaceCadet);
+    coveLNF.setColour(Slider::ColourIds::textBoxOutlineColourId, _SpaceCadet);
+    coveLNF.setColour(ToggleButton::tickDisabledColourId, _SpaceCadet);
+    
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -186,23 +203,23 @@ void CoveSplitGateAudioProcessorEditor::setGateState(GateBand band, bool state /
     switch (band)
     {
     case GateBand::LowBand:
-        lowMeterL.setThresholdEnabled(state);
-        lowMeterR.setThresholdEnabled(state);
-        lowThresholdSlider.setEnabled(state);
-        lowRatioSlider.setEnabled(state);
-        lowAttackSlider.setEnabled(state);
-        lowReleaseSlider.setEnabled(state);
-        lowHoldSlider.setEnabled(state);
+        lowMeterL.setThresholdEnabled(!state);
+        lowMeterR.setThresholdEnabled(!state);
+        lowThresholdSlider.setEnabled(!state);
+        lowRatioSlider.setEnabled(!state);
+        lowAttackSlider.setEnabled(!state);
+        lowReleaseSlider.setEnabled(!state);
+        lowHoldSlider.setEnabled(!state);
         break;
 
     case GateBand::HighBand:
-        highMeterL.setThresholdEnabled(state);
-        highMeterR.setThresholdEnabled(state);
-        highThresholdSlider.setEnabled(state);
-        highRatioSlider.setEnabled(state);
-        highAttackSlider.setEnabled(state);
-        highReleaseSlider.setEnabled(state);
-        highHoldSlider.setEnabled(state);
+        highMeterL.setThresholdEnabled(!state);
+        highMeterR.setThresholdEnabled(!state);
+        highThresholdSlider.setEnabled(!state);
+        highRatioSlider.setEnabled(!state);
+        highAttackSlider.setEnabled(!state);
+        highReleaseSlider.setEnabled(!state);
+        highHoldSlider.setEnabled(!state);
         break;
     }
 
@@ -223,7 +240,7 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     //g.drawRect(debugRect);
 
     // Debug
-    
+    /*
     g.setColour(juce::Colours::red);
     g.drawLine(getWidth() / 4.f, getHeight(), getWidth() / 4.f, 0, 1.f); // Draw 25% Vertical Line
     g.drawLine(getWidth() / 2.f, getHeight(), getWidth() / 2.f, 0, 1.f); // Draw Center Vertical Line
@@ -233,7 +250,7 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour(juce::Colours::pink);
     g.drawLine(debugRect.getWidth() / 2.f, getHeight(), debugRect.getWidth() / 2.f, 0, 1.f); // Draw Vertical Line halfway in left component
     g.drawLine(debugRect_2.getX() + (debugRect_2.getWidth() / 2), getHeight(), debugRect_2.getX() + (debugRect_2.getWidth() / 2), 0, 1.f); // Draw Vertical line halfway in right component
-    
+    */
 }
 
 

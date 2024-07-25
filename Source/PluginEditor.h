@@ -92,5 +92,24 @@ private:
     juce::Label holdLabel;
     juce::Label crossoverLabel;
 
+    
+    const juce::Colour _MossGreen = juce::Colour(116, 142, 84);
+    const juce::Colour _LavenderBlush = juce::Colour(238, 229, 233);
+    const juce::Colour _SandyBrown = juce::Colour(255, 155, 66);
+    const juce::Colour _RichBlack = juce::Colour(4, 21, 31);
+    const juce::Colour _CaputMortuum = juce::Colour(88, 31, 24);
+    
+    const juce::Colour _Charcoal = juce::Colour(30, 70, 83);
+    const juce::Colour _PersianGreen = juce::Colour(42, 157, 143);
+    const juce::Colour _Saffron = juce::Colour(233, 196, 106);
+    const juce::Colour _SandyOrange = juce::Colour(244, 162, 97);
+    const juce::Colour _BurntSienna = juce::Colour(231, 111, 81);
+
+    const juce::Colour _Isabelline = juce::Colour(242, 233, 228);
+    const juce::Colour _PaleDogwood = juce::Colour(201, 173, 167);
+    const juce::Colour _RoseQuartz = juce::Colour(154, 140, 152);
+    const juce::Colour _UltraViolet = juce::Colour(74, 78, 105);
+    const juce::Colour _SpaceCadet = juce::Colour(34, 34, 59);
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessorEditor)
 };

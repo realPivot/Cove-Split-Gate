@@ -229,9 +229,23 @@ namespace Gui
 		int refreshRateInHz = 30;
 		int timerIterator = 0;
 
-		juce::Colour backgroundColour = juce::Colour(209, 222, 222).withBrightness(.2f);
-		juce::Colour levelColour = juce::Colour(209, 222, 222);
-		juce::Colour thresholdColour = juce::Colours::darkred.darker(.4f).withAlpha(.4f);
-		juce::Colour peakColour = juce::Colour(29, 32, 31);
+		const juce::Colour _Charcoal = juce::Colour(38, 70, 83);
+		const juce::Colour _PersianGreen = juce::Colour(42, 157, 143);
+		const juce::Colour _Saffron = juce::Colour(233, 196, 106);
+		const juce::Colour _SandyOrange = juce::Colour(244, 162, 97);
+		const juce::Colour _BurntSienna = juce::Colour(231, 111, 81);
+
+		const juce::Colour _Isabelline = juce::Colour(242, 233, 228);
+		const juce::Colour _PaleDogwood = juce::Colour(201, 173, 167);
+		const juce::Colour _RoseQuartz = juce::Colour(154, 140, 152);
+		const juce::Colour _UltraViolet = juce::Colour(74, 78, 105);
+		const juce::Colour _SpaceCadet = juce::Colour(34, 34, 59);
+
+		juce::Colour backgroundColour = _UltraViolet;
+		juce::Colour thresholdColour = _UltraViolet.interpolatedWith(_PaleDogwood, 0.5f);
+		juce::Colour levelColour = _PaleDogwood;
+		juce::Colour peakColour = _RoseQuartz;
+
+
 	};
 }

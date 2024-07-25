@@ -18,7 +18,7 @@ public:
 
         setDefaultSansSerifTypeface(getTypefaceForFont(getNotoThinFont()));
     };
-
+    // Sliders
     void drawRotarySlider(Graphics& g, int x, int y, int width, int height, float sliderPos,
         const float rotaryStartAngle, const float rotaryEndAngle, Slider& slider) override
     {
@@ -63,21 +63,6 @@ public:
         g.setColour(slider.findColour(Slider::thumbColourId));
         //g.fillEllipse(Rectangle<float>(thumbWidth, thumbWidth).withCentre(thumbPoint));
         g.strokePath(thumbPath, PathStrokeType(thumbW, PathStrokeType::curved, PathStrokeType::EndCapStyle::square));
-    }
-
-    void drawBubble(Graphics& g, BubbleComponent& comp,
-        const Point<float>& tip, const Rectangle<float>& body) override
-    {
-        Path p;
-        
-        p.addBubble(body.reduced(0.5f), body.getUnion(Rectangle<float>(tip.x, tip.y, 0.f, 0.f)),
-            tip, 1.f, 0.f);
-
-        g.setColour(comp.findColour(BubbleComponent::backgroundColourId));
-        g.fillPath(p);
-
-        g.setColour(comp.findColour(BubbleComponent::outlineColourId));
-        g.strokePath(p, PathStrokeType(1.0f));
     }
 
     void drawLinearSlider(Graphics& g, int x, int y, int width, int height,
@@ -147,7 +132,7 @@ public:
                 g.setColour(slider.findColour(Slider::thumbColourId));
                 //g.fillEllipse(Rectangle<float>(static_cast<float> (thumbWidth), static_cast<float> (thumbWidth)).withCentre(isThreeVal ? thumbPoint : maxPoint)); // old thumb
                 g.fillRect(Rectangle<int>(static_cast<int> (thumbWidth) / 2, static_cast<int> (thumbWidth)).withCentre(isThreeVal ? thumbPoint.roundToInt() : maxPoint.roundToInt()));
-                g.setColour(slider.findColour(Slider::backgroundColourId));
+                g.setColour(slider.findColour(Slider::trackColourId));
                 g.fillRect(Rectangle<int>((static_cast<int> (thumbWidth) / 5), static_cast<int> (thumbWidth) / 2).withCentre(isThreeVal ? thumbPoint.roundToInt() : maxPoint.roundToInt()));
                 //g.drawEllipse(Rectangle<float>(1.f, 1.f).withCentre(isThreeVal ? thumbPoint : maxPoint), 1.f);
             }
@@ -183,31 +168,12 @@ public:
         }
     }
 
-    void drawTextEditorOutline(Graphics& g, int width, int height, TextEditor& textEditor) override
-    {
-        if (dynamic_cast<AlertWindow*> (textEditor.getParentComponent()) == nullptr)
-        {
-            if (textEditor.isEnabled())
-            {
-                if (textEditor.hasKeyboardFocus(true) && !textEditor.isReadOnly())
-                {
-                    g.setColour(textEditor.findColour(TextEditor::focusedOutlineColourId));
-                    g.drawRect(0, 0, width, height, 1);
-                }
-                else
-                {
-                    g.setColour(textEditor.findColour(TextEditor::outlineColourId));
-                    g.drawRect(0, 0, width, height);
-                }
-            }
-        }
-    }
-
     int getSliderThumbRadius(Slider& slider) override
     {
         return jmin(12, slider.isHorizontal() ? static_cast<int> ((float)slider.getHeight() * 0.5f)
             : static_cast<int> ((float)slider.getWidth() * 0.5f));
     }
+
 
     Slider::SliderLayout getSliderLayout(Slider& slider) override
     {
@@ -277,6 +243,91 @@ public:
         return layout;
     }
 
+    // Buttons
+    void drawToggleButton(Graphics& g, ToggleButton& button,
+        bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    {
+        auto fontSize = jmin(15.0f, (float)button.getHeight() * 0.75f);
+        auto tickWidth = fontSize * 1.1f;
+
+        drawTickBox(g, button, 4.0f, ((float)button.getHeight() - tickWidth) * 0.5f,
+            tickWidth, tickWidth,
+            button.getToggleState(),
+            button.isEnabled(),
+            shouldDrawButtonAsHighlighted,
+            shouldDrawButtonAsDown);
+
+        g.setColour(button.findColour(ToggleButton::textColourId));
+        g.setFont(fontSize);
+
+        if (!button.isEnabled())
+            g.setOpacity(0.5f);
+
+        g.drawFittedText(button.getButtonText(),
+            button.getLocalBounds().withTrimmedLeft(roundToInt(tickWidth) + 10)
+            .withTrimmedRight(2),
+            Justification::centredTop, 1);
+    }
+
+    void drawTickBox(Graphics& g, Component& component,
+        float x, float y, float w, float h, const bool ticked,
+        [[maybe_unused]] const bool isEnabled,
+        [[maybe_unused]] const bool shouldDrawButtonAsHighlighted,
+        [[maybe_unused]] const bool shouldDrawButtonAsDown) override
+    {
+        Rectangle<float> tickBounds(juce::roundFloatToInt(x), juce::roundFloatToInt(y), juce::roundFloatToInt(w), juce::roundFloatToInt(h));
+
+        g.setColour(component.findColour(ToggleButton::tickDisabledColourId));
+        g.drawRect(tickBounds, 1.0f);
+
+        if (ticked)
+        {
+            g.setColour(component.findColour(ToggleButton::tickColourId));
+            auto tick = getTickShape(0.75f);
+            g.fillPath(tick, tick.getTransformToScaleToFit(tickBounds.reduced(4, 5).toFloat(), false));
+            auto bgColor = component.findColour(ToggleButton::tickDisabledColourId);
+            g.setColour(bgColor.withAlpha(.25f));
+            g.fillRect(tickBounds.reduced(2.f));
+        }
+    }
+
+    // Text or Text Editors
+    void drawTextEditorOutline(Graphics& g, int width, int height, TextEditor& textEditor) override
+    {
+        if (dynamic_cast<AlertWindow*> (textEditor.getParentComponent()) == nullptr)
+        {
+            if (textEditor.isEnabled())
+            {
+                if (textEditor.hasKeyboardFocus(true) && !textEditor.isReadOnly())
+                {
+                    g.setColour(textEditor.findColour(TextEditor::focusedOutlineColourId));
+                    g.drawRect(0, 0, width, height, 1);
+                }
+                else
+                {
+                    g.setColour(textEditor.findColour(TextEditor::outlineColourId));
+                    g.drawRect(0, 0, width, height);
+                }
+            }
+        }
+    }
+
+    void drawBubble(Graphics& g, BubbleComponent& comp,
+        const Point<float>& tip, const Rectangle<float>& body) override
+    {
+        Path p;
+
+        p.addBubble(body.reduced(0.5f), body.getUnion(Rectangle<float>(tip.x, tip.y, 0.f, 0.f)),
+            tip, 1.f, 0.f);
+
+        g.setColour(comp.findColour(BubbleComponent::backgroundColourId));
+        g.fillPath(p);
+
+        g.setColour(comp.findColour(BubbleComponent::outlineColourId));
+        g.strokePath(p, PathStrokeType(1.0f));
+    }
+
+    // Fonts
     static const Font& getNotoLightFont()
     {
         static Font notoLight(Font(Typeface::createSystemTypefaceFor(BinaryData::NotoSansLight_ttf,
