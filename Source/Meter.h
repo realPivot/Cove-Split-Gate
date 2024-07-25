@@ -216,6 +216,7 @@ namespace Gui
 				thresholdColour = newColour;
 				break;
 			}
+			repaint();
 		}
 
 	private:
@@ -241,8 +242,8 @@ namespace Gui
 		const juce::Colour _UltraViolet = juce::Colour(74, 78, 105);
 		const juce::Colour _SpaceCadet = juce::Colour(34, 34, 59);
 
-		juce::Colour backgroundColour = _UltraViolet;
-		juce::Colour thresholdColour = _UltraViolet.interpolatedWith(_PaleDogwood, 0.5f);
+		juce::Colour backgroundColour = juce::Colours::beige;
+		juce::Colour thresholdColour = juce::Colours::beige;
 		juce::Colour levelColour = _PaleDogwood;
 		juce::Colour peakColour = _RoseQuartz;
 

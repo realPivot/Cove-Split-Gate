@@ -36,6 +36,8 @@ public:
 
     void setGateState(GateBand band, bool state);
 
+    void setColoursForLNF(CoveLookAndFeel& lnf);
+
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
     AudioProcessorValueTreeState& vts;
@@ -92,6 +94,9 @@ private:
     juce::Label holdLabel;
     juce::Label crossoverLabel;
 
+    std::unique_ptr<Drawable> lowpassSVG = juce::Drawable::createFromImageData(BinaryData::LowPassCurve_svg, BinaryData::LowPassCurve_svgSize);
+    std::unique_ptr<Drawable> highpassSVG = juce::Drawable::createFromImageData(BinaryData::HighPassCurve_svg, BinaryData::HighPassCurve_svgSize);
+    std::unique_ptr<Drawable> crossoverSVG = juce::Drawable::createFromImageData(BinaryData::CrossoverCurve_svg, BinaryData::CrossoverCurve_svgSize);
     
     const juce::Colour _MossGreen = juce::Colour(116, 142, 84);
     const juce::Colour _LavenderBlush = juce::Colour(238, 229, 233);

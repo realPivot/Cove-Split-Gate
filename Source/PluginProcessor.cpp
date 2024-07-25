@@ -332,8 +332,8 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         }
     }
 
-    if (*lowBypass < 0.5f) { lowGate.process(lowGateBuffer); }
-    if (*highBypass < 0.5f) { highGate.process(highGateBuffer); }
+    if (*lowBypass > 0.5f) { lowGate.process(lowGateBuffer); }
+    if (*highBypass > 0.5f) { highGate.process(highGateBuffer); }
 
     fb0Context.getOutputBlock().copyFrom(lowGateBuffer);
     fb1Context.getOutputBlock().copyFrom(highGateBuffer);

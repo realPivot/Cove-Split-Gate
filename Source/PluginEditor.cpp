@@ -31,23 +31,7 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 {
     //setLookAndFeel(&coveLNF);
     LookAndFeel::setDefaultLookAndFeel(&coveLNF);
-    coveLNF.setColour(ResizableWindow::backgroundColourId, _Isabelline);
-    
-    coveLNF.setColour(TextEditor::ColourIds::backgroundColourId, _PaleDogwood);
-    coveLNF.setColour(Slider::ColourIds::trackColourId, _PaleDogwood);
-    coveLNF.setColour(Slider::ColourIds::textBoxBackgroundColourId, _PaleDogwood);
-    coveLNF.setColour(Slider::ColourIds::textBoxOutlineColourId, _PaleDogwood);
-    
-    coveLNF.setColour(Slider::backgroundColourId, _RoseQuartz);
-    
-        coveLNF.setColour(Slider::thumbColourId, _UltraViolet);
-    coveLNF.setColour(ToggleButton::tickColourId, _UltraViolet);
-
-    coveLNF.setColour(Label::textColourId, _SpaceCadet);
-    coveLNF.setColour(TextEditor::textColourId, _SpaceCadet);
-    coveLNF.setColour(Slider::ColourIds::textBoxTextColourId, _SpaceCadet);
-    coveLNF.setColour(Slider::ColourIds::textBoxOutlineColourId, _SpaceCadet);
-    coveLNF.setColour(ToggleButton::tickDisabledColourId, _SpaceCadet);
+    setColoursForLNF(coveLNF);
     
 
     // Make sure that before the constructor has finished, you've set the
@@ -199,6 +183,50 @@ CoveSplitGateAudioProcessorEditor::~CoveSplitGateAudioProcessorEditor()
     LookAndFeel::setDefaultLookAndFeel(nullptr);
 }
 
+void CoveSplitGateAudioProcessorEditor::setColoursForLNF(CoveLookAndFeel& lnf) {
+    std::array<Gui::Meter*, 4> meters = { &lowMeterL, &lowMeterR, &highMeterL, &highMeterR };
+
+    auto darkerAmount = .1f;
+
+    // Light to Dark 
+    juce::Colour colour_01 = _Isabelline.darker(darkerAmount * .5f);
+    juce::Colour colour_02 = _PaleDogwood.darker(darkerAmount * 1.1);
+    juce::Colour colour_03 = _RoseQuartz.darker(darkerAmount * 1.3);
+    juce::Colour colour_04 = _UltraViolet.darker(darkerAmount * 1.5f);
+    juce::Colour colour_05 = _SpaceCadet.darker(darkerAmount * 2.f);
+
+    // Lightest
+    lnf.setColour(ResizableWindow::backgroundColourId, colour_01);
+
+    // Medium-Light
+    lnf.setColour(TextEditor::ColourIds::backgroundColourId, colour_02);
+    lnf.setColour(Slider::ColourIds::trackColourId, colour_02);
+    lnf.setColour(Slider::ColourIds::textBoxBackgroundColourId, colour_02);
+    lnf.setColour(Slider::ColourIds::textBoxOutlineColourId, colour_02);
+
+    // Medium
+    lnf.setColour(Slider::backgroundColourId, colour_03);
+
+    // Medium-Dark
+    lnf.setColour(Slider::thumbColourId, colour_04);
+    lnf.setColour(ToggleButton::tickColourId, colour_04);
+
+    // Darkest
+    lnf.setColour(Label::textColourId, colour_05);
+    lnf.setColour(TextEditor::textColourId, colour_05);
+    lnf.setColour(Slider::ColourIds::textBoxTextColourId, colour_05);
+    lnf.setColour(Slider::ColourIds::textBoxOutlineColourId, colour_05);
+    lnf.setColour(ToggleButton::tickDisabledColourId, colour_05);
+
+    for (int i = 0; i < 4; i++) {
+        meters[i]->setColour(Gui::Meter::Background, colour_04);
+        meters[i]->setColour(Gui::Meter::Threshold, colour_04.interpolatedWith(colour_02, 0.5f));
+        meters[i]->setColour(Gui::Meter::Level, colour_02);
+        meters[i]->setColour(Gui::Meter::Peak, colour_03);
+    }
+
+}
+
 void CoveSplitGateAudioProcessorEditor::setGateState(GateBand band, bool state /*Value to set for the band*/) {
     switch (band)
     {
@@ -233,6 +261,30 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
+
+    auto area = getBounds();
+    auto verticalSegment = area.getHeight() / 8;
+    auto top = area.removeFromTop(verticalSegment);
+    auto header = area.removeFromTop(verticalSegment);
+    auto leftHeader = header.removeFromLeft(header.getWidth() / 2);
+    auto rightHeader = header;
+
+    auto topQuarter = top.getWidth() / 4;
+    auto topLeft = top.removeFromLeft(topQuarter);
+    auto topRight = top.removeFromRight(topQuarter);
+
+    auto leftSide = area.removeFromLeft(area.getWidth() / 2);
+    auto rightSide = area;
+    
+    lowpassSVG.get()->setDrawableTransform(AffineTransform::translation(topLeft.getCentre().translated(0, -25)));
+    lowpassSVG->draw(g, 1.0f);
+
+    highpassSVG.get()->setDrawableTransform(AffineTransform::translation(highBypassButton.getX(), topRight.getCentreY() - 25));
+    highpassSVG->draw(g, 1.f);
+
+    crossoverSVG.get()->setDrawableTransform(AffineTransform::translation(top.getCentre().translated( -(crossoverSVG.get()->getWidth() / 2), crossoverSVG.get()->getHeight() + 5)));
+    crossoverSVG->draw(g, 1.f);
+
     //g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
     
     // Debug
@@ -345,13 +397,11 @@ void CoveSplitGateAudioProcessorEditor::resized()
     for (int i = 0; i < textComponents.size(); i++) {
         textComponents[i] = bottom.removeFromTop(heightTextComponents);
     }
-    crossoverLabel.setBounds(textTop);
+    //crossoverLabel.setBounds(textTop);
     thresholdLabel.setBounds(textComponents[0]);
     ratioLabel.setBounds(textComponents[2]);
     attackLabel.setBounds(textComponents[4]);
     releaseLabel.setBounds(textComponents[6]);
     holdLabel.setBounds(textComponents[8]);
-
-    
     
 }

@@ -94,7 +94,7 @@ public:
             backgroundTrack.startNewSubPath(startPoint.toFloat());
             backgroundTrack.lineTo(endPoint.toFloat());
             g.setColour(slider.findColour(Slider::backgroundColourId));
-            g.strokePath(backgroundTrack, { trackWidth, PathStrokeType::JointStyle::mitered, PathStrokeType::EndCapStyle::square });
+            g.strokePath(backgroundTrack, { trackWidth, PathStrokeType::JointStyle::curved, PathStrokeType::EndCapStyle::square });
 
             Path valueTrack;
             Point<int> minPoint, maxPoint, thumbPoint;
@@ -125,7 +125,7 @@ public:
             valueTrack.startNewSubPath(minPoint.toFloat());
             valueTrack.lineTo(isThreeVal ? thumbPoint.toFloat() : maxPoint.toFloat());
             g.setColour(slider.findColour(Slider::trackColourId));
-            g.strokePath(valueTrack, { trackWidth, PathStrokeType::curved, PathStrokeType::rounded });
+            g.strokePath(valueTrack, { trackWidth, PathStrokeType::curved, PathStrokeType::square });
 
             if (!isTwoVal) // draw thumb for horizontal / threeVal slider
             {
