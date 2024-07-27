@@ -97,6 +97,9 @@ private:
     std::unique_ptr<Drawable> lowpassSVG = juce::Drawable::createFromImageData(BinaryData::LowPassCurve_svg, BinaryData::LowPassCurve_svgSize);
     std::unique_ptr<Drawable> highpassSVG = juce::Drawable::createFromImageData(BinaryData::HighPassCurve_svg, BinaryData::HighPassCurve_svgSize);
     std::unique_ptr<Drawable> crossoverSVG = juce::Drawable::createFromImageData(BinaryData::CrossoverCurve_svg, BinaryData::CrossoverCurve_svgSize);
+    std::unique_ptr<Drawable> cove_logo = juce::Drawable::createFromImageData(BinaryData::COVELogo_Bold_svg, BinaryData::COVELogo_Bold_svgSize);
+
+    juce::DrawableButton coveLogoButton;
     
     const juce::Colour _MossGreen = juce::Colour(116, 142, 84);
     const juce::Colour _LavenderBlush = juce::Colour(238, 229, 233);

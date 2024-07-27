@@ -27,8 +27,10 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     highRatioAttach(*vts.getParameter("highRatio"), highRatioSlider),
     highAttachAttach(*vts.getParameter("highAttack"), highAttackSlider),
     highReleaseAttach(*vts.getParameter("highRelease"), highReleaseSlider),
-    highHoldAttach(*vts.getParameter("highHold"), highHoldSlider)
+    highHoldAttach(*vts.getParameter("highHold"), highHoldSlider),
+    coveLogoButton("Cove Logo", juce::DrawableButton::ButtonStyle::ImageOnButtonBackgroundOriginalSize)
 {
+
     //setLookAndFeel(&coveLNF);
     LookAndFeel::setDefaultLookAndFeel(&coveLNF);
     setColoursForLNF(coveLNF);
@@ -93,10 +95,22 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
         }
         };
     
+
+    coveLogoButton.setImages(cove_logo.get());
+    coveLogoButton.onClick = [this]() {
+        juce::URL link("https://github.com/realPivot/Cove-Split-Gate");
+        link.launchInDefaultBrowser();
+        };
+    coveLogoButton.setColour(TextButton::ColourIds::buttonColourId, juce::Colours::transparentBlack);
+    coveLogoButton.setColour(TextButton::ColourIds::buttonColourId, juce::Colours::transparentWhite);
+    coveLogoButton.setColour(ComboBox::outlineColourId, juce::Colours::transparentWhite);
+    addAndMakeVisible(coveLogoButton);
+
     // Sliders
     auto smallSliderTextBoxWidth = 70;
     auto bigSliderTextBoxWidth = 105;
     auto textBoxHeight = 20;
+    auto timeSliderSuffix = " ms";
 
     addAndMakeVisible(crossoverSlider);
     crossoverSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
@@ -116,14 +130,17 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     addAndMakeVisible(lowAttackSlider);
     lowAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     lowAttackSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
+    lowAttackSlider.setTextValueSuffix(timeSliderSuffix);
 
     addAndMakeVisible(lowReleaseSlider);
     lowReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     lowReleaseSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
+    lowReleaseSlider.setTextValueSuffix(timeSliderSuffix);
 
     addAndMakeVisible(lowHoldSlider);
     lowHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     lowHoldSlider.setTextBoxStyle(Slider::TextBoxRight, false, smallSliderTextBoxWidth, textBoxHeight);
+    lowHoldSlider.setTextValueSuffix(timeSliderSuffix);
 
     addAndMakeVisible(highThresholdSlider);
     highThresholdSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
@@ -136,14 +153,17 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     addAndMakeVisible(highAttackSlider);
     highAttackSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     highAttackSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
+    highAttackSlider.setTextValueSuffix(timeSliderSuffix);
 
     addAndMakeVisible(highReleaseSlider);
     highReleaseSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     highReleaseSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
+    highReleaseSlider.setTextValueSuffix(timeSliderSuffix);
 
     addAndMakeVisible(highHoldSlider);
     highHoldSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
     highHoldSlider.setTextBoxStyle(Slider::TextBoxLeft, false, smallSliderTextBoxWidth, textBoxHeight);
+    highHoldSlider.setTextValueSuffix(timeSliderSuffix);
 
     // Labels
     addAndMakeVisible(crossoverLabel);
@@ -175,6 +195,7 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     holdLabel.setText("Hold", dontSendNotification);
     holdLabel.setJustificationType(juce::Justification::centredTop);
     holdLabel.setInterceptsMouseClicks(false, false);
+
 
 }
 
@@ -366,9 +387,10 @@ void CoveSplitGateAudioProcessorEditor::resized()
     lowHoldSlider.setBounds(leftComponents[4]);
 
     // Debug
+    /*
     debugRect = leftComponents[0];
     debugRect.removeFromRight(lowThresholdSlider.getTextBoxWidth() + (coveLNF.getSliderThumbRadius(lowThresholdSlider) / 5));
-
+    */
     // Right
 
     const int amountOfRightComponents = 6;
@@ -391,11 +413,11 @@ void CoveSplitGateAudioProcessorEditor::resized()
 
     // Labels
     auto textTop = getBounds().removeFromTop(verticalSegment);
-    auto bottom = getBounds().removeFromBottom(verticalSegment * 6);
-    auto heightTextComponents = bottom.getHeight() / (jmax(amountOfLeftComponents, amountOfRightComponents) * 2);
+    auto bottomText = getBounds().removeFromBottom(verticalSegment * 6);
+    auto heightTextComponents = bottomText.getHeight() / (jmax(amountOfLeftComponents, amountOfRightComponents) * 2);
     std::array <juce::Rectangle<int>, jmax(amountOfLeftComponents, amountOfRightComponents) * 2> textComponents;
     for (int i = 0; i < textComponents.size(); i++) {
-        textComponents[i] = bottom.removeFromTop(heightTextComponents);
+        textComponents[i] = bottomText.removeFromTop(heightTextComponents);
     }
     //crossoverLabel.setBounds(textTop);
     thresholdLabel.setBounds(textComponents[0]);
@@ -403,5 +425,8 @@ void CoveSplitGateAudioProcessorEditor::resized()
     attackLabel.setBounds(textComponents[4]);
     releaseLabel.setBounds(textComponents[6]);
     holdLabel.setBounds(textComponents[8]);
-    
+
+    juce::Rectangle<int> bottom = Rectangle<int>(juce::Point<int>(0, jmax(lowHoldSlider.getBottom(), highHoldSlider.getBottom())), juce::Point<int>(getRight(), getBottom()));
+    //debugRect = bottom;
+    coveLogoButton.setBounds(bottom);
 }

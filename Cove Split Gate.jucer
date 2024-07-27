@@ -14,6 +14,9 @@
                 file="Binaries/SVG/HighPassCurve.svg"/>
           <FILE id="wsVWAu" name="CrossoverCurve.svg" compile="0" resource="1"
                 file="Binaries/SVG/CrossoverCurve.svg"/>
+          <FILE id="zHOe73" name="COVELogo.svg" compile="0" resource="1" file="Binaries/SVG/COVELogo.svg"/>
+          <FILE id="rsGvTb" name="COVELogo_Bold.svg" compile="0" resource="1"
+                file="Binaries/SVG/COVELogo_Bold.svg"/>
         </GROUP>
         <GROUP id="{55FA22CD-429B-2481-BEAB-4C9E193D9E5F}" name="Fonts">
           <FILE id="EHV1kR" name="NotoSans-ExtraBold.ttf" compile="0" resource="1"
