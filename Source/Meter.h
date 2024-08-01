@@ -220,6 +220,7 @@ namespace Gui
 		}
 
 	private:
+
 		bool isThresholdEnabled = false;
 		float level = -80.0f;
 		float maxLevel = -80.f;

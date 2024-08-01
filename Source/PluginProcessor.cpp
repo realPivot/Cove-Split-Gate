@@ -32,26 +32,44 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() {
 
     auto frequencyAttribute = AudioParameterFloatAttributes();
 
+    auto timeAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { 
+        if (x < 10) {
+            return juce::String(x, 2) + juce::String(" ms");
+        }
+        else if (x < 100 && x >= 10) {
+            return juce::String(x, 1) + juce::String(" ms");
+        }
+        else {
+            return juce::String((double)juce::roundToInt(x), 0, false) + juce::String(" ms");
+        }
+        });
+
     auto thresholdAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { 
         auto thresholdString = Decibels::toString(Decibels::gainToDecibels(x), 2, -80.f, false);
         return thresholdString + " dB"; });
 
     auto bypassAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "On" : "Off"; });
 
+    auto muteAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "Mute" : "Disabled"; });
+
+
+
     params.push_back(std::make_unique<AudioParameterFloat>("crossover", "Crossover Frequency", juce::NormalisableRange<float>(20.f, 20000.f, .01f, calcLogSkew(50.f, 20000.f)), 1000.f, frequencyAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("lowBypass", "Low Enable", 0, bypassAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
-    params.push_back(std::make_unique<AudioParameterFloat>("lowRelease", "Low Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
-    params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow + 1.f, holdHigh)), 5.f));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(ratioLow, ratioHigh / 4)), 4.0f, " / 1"));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .001f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, timeAttribute)); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("lowRelease", "Low Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, .001f, calcLogSkew(releaseMsMin, releaseMsMax / 2)), 100.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .001f, calcLogSkew(holdLow + 1.f, holdHigh / 2)), 5.f, timeAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterBool>("lowMute", "Low Mute", 0, muteAttribute));
 
     params.push_back(std::make_unique<AudioParameterBool>("highBypass", "High Enable", 0, bypassAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(1.0f, ratioHigh / 2)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .01f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, "ms")); // divide attackMsMax by 2 to make skew less aggressive
-    params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, 1.f, calcLogSkew(releaseMsMin, releaseMsMax)), 100.f, "ms"));
-    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .01f, calcLogSkew(holdLow+1.f, holdHigh)),5.f));
+    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(ratioLow, ratioHigh / 4)), 4.0f, " / 1"));
+    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .001f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, timeAttribute)); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, .001f, calcLogSkew(releaseMsMin, releaseMsMax / 2)), 100.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .001f, calcLogSkew(holdLow+1.f, holdHigh / 2)),5.f, timeAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterBool>("highMute", "High Mute", 0, muteAttribute));
     return { params.begin(), params.end() };
 }
 
@@ -76,12 +94,14 @@ CoveSplitGateAudioProcessor::CoveSplitGateAudioProcessor()
     lowRelease = vts.getRawParameterValue("lowRelease");
     lowHold = vts.getRawParameterValue("lowHold");
     lowThreshold = vts.getRawParameterValue("lowThreshold");
+    lowMute = vts.getRawParameterValue("lowMute");
     highBypass = vts.getRawParameterValue("highBypass");
     highRatio = vts.getRawParameterValue("highRatio");
     highAttack = vts.getRawParameterValue("highAttack");
     highRelease = vts.getRawParameterValue("highRelease");
     highHold = vts.getRawParameterValue("highHold");
     highThreshold = vts.getRawParameterValue("highThreshold");
+    highMute = vts.getRawParameterValue("highMute");
 
     lp.setType(dsp::LinkwitzRileyFilterType::lowpass);
     hp.setType(dsp::LinkwitzRileyFilterType::highpass);
@@ -349,10 +369,12 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
             }
         };
 
-    addFilterBand(buffer, filterBuffers[0]);
-    addFilterBand(buffer, filterBuffers[1]);
-
-
+    
+    if (*lowMute < 0.5f) addFilterBand(buffer, filterBuffers[0]); // add low band to output buffer if mute is not enabled
+    if (*highMute < 0.5f) addFilterBand(buffer, filterBuffers[1]); // add high band to output buffer if mute is not enabled
+    
+    //addFilterBand(buffer, filterBuffers[0]); // add low band to output buffer if mute is not enabled
+    //addFilterBand(buffer, filterBuffers[1]); // add high band to output buffer if mute is not enabled
 }
 
 float CoveSplitGateAudioProcessor::getRmsValue(Channel channel, Band band) const

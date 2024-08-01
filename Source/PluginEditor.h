@@ -57,6 +57,12 @@ private:
     juce::ToggleButton highBypassButton;
     juce::ButtonParameterAttachment highBypassAttach;
 
+    juce::TextButton lowMuteButton;
+    juce::ButtonParameterAttachment lowMuteAttach;
+
+    juce::TextButton highMuteButton;
+    juce::ButtonParameterAttachment highMuteAttach;
+
     juce::Slider lowThresholdSlider;
     juce::SliderParameterAttachment lowThresholdAttach;
 
@@ -87,19 +93,22 @@ private:
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
 
-    juce::Label thresholdLabel;
-    juce::Label attackLabel;
-    juce::Label releaseLabel;
-    juce::Label ratioLabel;
-    juce::Label holdLabel;
-    juce::Label crossoverLabel;
+    juce::Label thresholdLabel{"ThresholdLabel", "Threshold"};
+    juce::Label attackLabel{"AttackLabel", "Attack"};
+    juce::Label releaseLabel{"ReleaseLabel", "Release"};
+    juce::Label ratioLabel{"RatioLabel", "Ratio"};
+    juce::Label holdLabel{"HoldLabel", "Hold"};
+    juce::Label crossoverLabel{"CrossoverLabel","Crossover" };
+    juce::Label versionLabel{"VersionLabel", JucePlugin_VersionString};
 
     std::unique_ptr<Drawable> lowpassSVG = juce::Drawable::createFromImageData(BinaryData::LowPassCurve_svg, BinaryData::LowPassCurve_svgSize);
     std::unique_ptr<Drawable> highpassSVG = juce::Drawable::createFromImageData(BinaryData::HighPassCurve_svg, BinaryData::HighPassCurve_svgSize);
     std::unique_ptr<Drawable> crossoverSVG = juce::Drawable::createFromImageData(BinaryData::CrossoverCurve_svg, BinaryData::CrossoverCurve_svgSize);
-    std::unique_ptr<Drawable> cove_logo = juce::Drawable::createFromImageData(BinaryData::COVELogo_Bold_svg, BinaryData::COVELogo_Bold_svgSize);
+    std::unique_ptr<Drawable> cove_logo = juce::Drawable::createFromImageData(BinaryData::COVE_TextOnly_svg, BinaryData::COVE_TextOnly_svgSize);
+    std::unique_ptr<Drawable> splitgate_logo = juce::Drawable::createFromImageData(BinaryData::SplitGate_Logo_svg, BinaryData::SplitGate_Logo_svgSize);
 
     juce::DrawableButton coveLogoButton;
+    juce::DrawableButton splitLogoButton;
     
     const juce::Colour _MossGreen = juce::Colour(116, 142, 84);
     const juce::Colour _LavenderBlush = juce::Colour(238, 229, 233);
@@ -118,6 +127,13 @@ private:
     const juce::Colour _RoseQuartz = juce::Colour(154, 140, 152);
     const juce::Colour _UltraViolet = juce::Colour(74, 78, 105);
     const juce::Colour _SpaceCadet = juce::Colour(34, 34, 59);
+
+    const std::array<juce::Colour, 5> activeColours{_Isabelline, _PaleDogwood, _RoseQuartz, _UltraViolet, _SpaceCadet};
+
+    void setMeterStyle(Gui::Meter& meter, Gui::Meter::MeterStyle style, Gui::Meter::FillDirection direction);
+    void setButtonStyle(juce::Button& button);
+    void setSliderStyle(juce::Slider& slider, juce::Slider::SliderStyle style, juce::Slider::TextEntryBoxPosition textBoxPosition, int textBoxWidth = 0, int textBoxHeight = 0, juce::String suffix = "", int numDecimalPlaces = 1);
+    void setLabelStyle(juce::Label& label, juce::Justification justification);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessorEditor)
 };

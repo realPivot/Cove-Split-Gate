@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="xsDr5n" name="Cove Split Gate" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="xsDr5n" name="Split Gate" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               companyName="Cove" pluginFormats="buildVST3" pluginDesc="Dual Band Gate"
-              pluginName="Cove Split Gate" version="0.1">
-  <MAINGROUP id="jWMVt6" name="Cove Split Gate">
+              pluginName="Split Gate" version="0.95">
+  <MAINGROUP id="jWMVt6" name="Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
       <GROUP id="{781E794C-21E6-7E7D-607F-DBD4E00228C4}" name="BinaryData">
         <GROUP id="{03DECDBF-6050-4025-9BC2-50CE1B8C2349}" name="SVG">
+          <FILE id="hq8HXS" name="SplitGate_Logo.svg" compile="0" resource="1"
+                file="E:/COVE/Logo Design/SVG/SplitGate_Logo.svg"/>
+          <FILE id="texjJ9" name="COVE_TextOnly.svg" compile="0" resource="1"
+                file="E:/COVE/Logo Design/SVG/COVE_TextOnly.svg"/>
           <FILE id="fI3oSH" name="LowPassCurve.svg" compile="0" resource="1"
                 file="Binaries/SVG/LowPassCurve.svg"/>
           <FILE id="gjb0HU" name="HighPassCurve.svg" compile="0" resource="1"

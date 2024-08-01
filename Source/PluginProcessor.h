@@ -80,14 +80,16 @@ private:
     std::atomic<float>* lowAttack = nullptr;
     std::atomic<float>* lowHold = nullptr;
     std::atomic<float>* lowRelease = nullptr;
-    
     std::atomic<float>* lowThreshold = nullptr;
+    std::atomic<float>* lowMute = nullptr;
+
     std::atomic<float>* highBypass = nullptr;
     std::atomic<float>* highAttack = nullptr;
     std::atomic<float>* highRelease = nullptr;
     std::atomic<float>* highRatio = nullptr;
     std::atomic<float>* highHold = nullptr;
     std::atomic<float>* highThreshold = nullptr;
+    std::atomic<float>* highMute = nullptr;
 
     LinkwitzRileyFilter<float> lp, hp;
     //NoiseGate<float> lowGate, highGate;
