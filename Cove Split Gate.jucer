@@ -2,8 +2,8 @@
 
 <JUCERPROJECT id="xsDr5n" name="Split Gate" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              companyName="Cove" pluginFormats="buildVST3" pluginDesc="Dual Band Gate"
-              pluginName="Split Gate" version="0.95">
+              companyName="Cove" pluginFormats="buildAAX,buildAU,buildVST3"
+              pluginDesc="Dual Band Gate" pluginName="Split Gate" version="0.95">
   <MAINGROUP id="jWMVt6" name="Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
       <GROUP id="{781E794C-21E6-7E7D-607F-DBD4E00228C4}" name="BinaryData">
