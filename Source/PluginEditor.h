@@ -12,6 +12,8 @@
 #include "PluginProcessor.h"
 #include "Meter.h"
 #include "CoveLookAndFeel.h"
+#include <juce_audio_utils/juce_audio_utils.h>
+#include "SettingsMenu.h"
 
 //==============================================================================
 /**
@@ -38,6 +40,8 @@ public:
 
     void setColoursForLNF(CoveLookAndFeel& lnf);
 
+    void updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band);
+
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
     AudioProcessorValueTreeState& vts;
@@ -45,6 +49,7 @@ private:
     ComponentBoundsConstrainer constrainer;
 
     Gui::Meter lowMeterL, lowMeterR, highMeterL, highMeterR;
+    juce::AudioVisualiserComponent audioVisualizerLow, audioVisualizerHigh;
 
     juce::Rectangle<int> debugRect, debugRect_2;
 
@@ -93,6 +98,10 @@ private:
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
 
+    //juce::Slider waveformGainSlider;
+    //juce::SliderParameterAttachment waveformGainAttach;
+
+
     juce::Label thresholdLabel{"ThresholdLabel", "Threshold"};
     juce::Label attackLabel{"AttackLabel", "Attack"};
     juce::Label releaseLabel{"ReleaseLabel", "Release"};
@@ -106,9 +115,11 @@ private:
     std::unique_ptr<Drawable> crossoverSVG = juce::Drawable::createFromImageData(BinaryData::CrossoverCurve_svg, BinaryData::CrossoverCurve_svgSize);
     std::unique_ptr<Drawable> cove_logo = juce::Drawable::createFromImageData(BinaryData::COVE_TextOnly_svg, BinaryData::COVE_TextOnly_svgSize);
     std::unique_ptr<Drawable> splitgate_logo = juce::Drawable::createFromImageData(BinaryData::SplitGate_Logo_svg, BinaryData::SplitGate_Logo_svgSize);
+    std::unique_ptr<Drawable> gearIcon = juce::Drawable::createFromImageData(BinaryData::gearsolid_svg, BinaryData::gearsolid_svgSize);
 
     juce::DrawableButton coveLogoButton;
     juce::DrawableButton splitLogoButton;
+    juce::DrawableButton advancedMenuButton;
     
     const juce::Colour _MossGreen = juce::Colour(116, 142, 84);
     const juce::Colour _LavenderBlush = juce::Colour(238, 229, 233);
@@ -130,8 +141,12 @@ private:
 
     const std::array<juce::Colour, 5> activeColours{_Isabelline, _PaleDogwood, _RoseQuartz, _UltraViolet, _SpaceCadet};
 
+    bool debug = true;
+
+    std::vector<juce::Rectangle<int>> rectangles;
+
     void setMeterStyle(Gui::Meter& meter, Gui::Meter::MeterStyle style, Gui::Meter::FillDirection direction);
-    void setButtonStyle(juce::Button& button);
+    //void setButtonStyle(juce::Button& button);
     void setSliderStyle(juce::Slider& slider, juce::Slider::SliderStyle style, juce::Slider::TextEntryBoxPosition textBoxPosition, int textBoxWidth = 0, int textBoxHeight = 0, juce::String suffix = "", int numDecimalPlaces = 1);
     void setLabelStyle(juce::Label& label, juce::Justification justification);
 

@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "SettingsMenu.h"
 
 typedef CoveSplitGateAudioProcessor::Channel _Channel;
 typedef CoveSplitGateAudioProcessor::Band _Band;
@@ -31,7 +32,10 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     highHoldAttach(*vts.getParameter("highHold"), highHoldSlider),
     highMuteAttach(*vts.getParameter("highMute"), highMuteButton),
     coveLogoButton("Cove Logo", juce::DrawableButton::ButtonStyle::ImageFitted),
-    splitLogoButton("Split Gate Logo", juce::DrawableButton::ButtonStyle::ImageFitted)
+    splitLogoButton("Split Gate Logo", juce::DrawableButton::ButtonStyle::ImageFitted),
+    advancedMenuButton("Advanced Settings", juce::DrawableButton::ButtonStyle::ImageFitted),
+    audioVisualizerLow(2),
+    audioVisualizerHigh(2)
 {
 
     //setLookAndFeel(&coveLNF);
@@ -44,10 +48,18 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     setSize(400, 550);
 
     // Meters
-    setMeterStyle(lowMeterL, Gui::Meter::Horizontal, Gui::Meter::Left);
-    setMeterStyle(lowMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
-    setMeterStyle(highMeterL, Gui::Meter::Horizontal, Gui::Meter::Left);
-    setMeterStyle(highMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
+    //setMeterStyle(lowMeterL, Gui::Meter::Horizontal, Gui::Meter::Left);
+    //setMeterStyle(lowMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
+    //setMeterStyle(highMeterL, Gui::Meter::Horizontal, Gui::Meter::Left);
+    //setMeterStyle(highMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
+    audioVisualizerLow.setBufferSize(512);
+    audioVisualizerLow.setSamplesPerBlock(p.getBlockSize());
+    audioVisualizerLow.setNumChannels(2);
+    addAndMakeVisible(audioVisualizerLow);
+    
+    audioVisualizerHigh.setBufferSize(512);
+    audioVisualizerHigh.setSamplesPerBlock(p.getBlockSize());
+    addAndMakeVisible(audioVisualizerHigh);
 
     startTimerHz(144); // how fast should rms value be updated for meters. Meter framerate updated in meter component.
 
@@ -92,6 +104,7 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
         juce::URL link("https://www.patreon.com/CoveDSP");
         link.launchInDefaultBrowser();
         };
+
     /* This doesn't seem to be working. I'm not going to worry about it for now.
     coveLogoButton.onStateChange = [this]() {
         auto state = coveLogoButton.getState();
@@ -127,6 +140,17 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
         link.launchInDefaultBrowser();
         };
     
+    addAndMakeVisible(advancedMenuButton);
+    gearIcon->replaceColour(Colours::black, activeColours[3]);
+    advancedMenuButton.setImages(gearIcon.get());
+    advancedMenuButton.onClick = [this]() {
+        juce::PopupMenu menu;
+
+        menu.addSectionHeader("Waveform Settings");
+        menu.addCustomItem(0, std::make_unique<SettingsMenu>(vts), nullptr, "Settings Menu"); // THIS DOES NOT WORK. CAN NOT BUILD
+        menu.showMenuAsync(juce::PopupMenu::Options());
+        };
+
     addAndMakeVisible(lowMuteButton);
     lowMuteButton.setToggleable(true);
     lowMuteButton.setClickingTogglesState(true);
@@ -183,6 +207,19 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 CoveSplitGateAudioProcessorEditor::~CoveSplitGateAudioProcessorEditor()
 {
     LookAndFeel::setDefaultLookAndFeel(nullptr);
+}
+
+void CoveSplitGateAudioProcessorEditor::updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band)
+{ // update the visualizer with buffer sent from audio processor
+    
+    switch (band) {
+    case GateBand::LowBand:
+        audioVisualizerLow.pushBuffer(buffer);
+        break;
+    case GateBand::HighBand:
+        audioVisualizerHigh.pushBuffer(buffer);
+        break;
+    }
 }
 
 void CoveSplitGateAudioProcessorEditor::setMeterStyle(Gui::Meter& meter, Gui::Meter::MeterStyle style, Gui::Meter::FillDirection direction) 
@@ -335,17 +372,28 @@ void CoveSplitGateAudioProcessorEditor::paint (juce::Graphics& g)
     //g.drawRect(debugRect);
 
     // Debug
-    /*
-    g.setColour(juce::Colours::red);
-    g.drawLine(getWidth() / 4.f, getHeight(), getWidth() / 4.f, 0, 1.f); // Draw 25% Vertical Line
-    g.drawLine(getWidth() / 2.f, getHeight(), getWidth() / 2.f, 0, 1.f); // Draw Center Vertical Line
-    g.drawLine((getWidth() / 4.f) * 3.f, getHeight(), (getWidth() / 4.f) * 3.f, 0, 1.f); // Draw 75% Vertical Line
-    g.drawLine(getWidth(), getHeight() / 2.f, 0, getHeight() / 2.f, 1.f); // Draw Center Horizontal Line
+    if (debug)
+    {
+        auto& random = juce::Random::getSystemRandom();
+        g.setColour(juce::Colours::red);
+        g.drawLine(getWidth() / 4.f, getHeight(), getWidth() / 4.f, 0, 1.f); // Draw 25% Vertical Line
+        g.drawLine(getWidth() / 2.f, getHeight(), getWidth() / 2.f, 0, 1.f); // Draw Center Vertical Line
+        g.drawLine((getWidth() / 4.f) * 3.f, getHeight(), (getWidth() / 4.f) * 3.f, 0, 1.f); // Draw 75% Vertical Line
+        g.drawLine(getWidth(), getHeight() / 2.f, 0, getHeight() / 2.f, 1.f); // Draw Center Horizontal Line
 
-    g.setColour(juce::Colours::pink);
-    g.drawLine(debugRect.getWidth() / 2.f, getHeight(), debugRect.getWidth() / 2.f, 0, 1.f); // Draw Vertical Line halfway in left component
-    g.drawLine(debugRect_2.getX() + (debugRect_2.getWidth() / 2), getHeight(), debugRect_2.getX() + (debugRect_2.getWidth() / 2), 0, 1.f); // Draw Vertical line halfway in right component
-    */
+        g.setColour(juce::Colours::pink);
+        g.drawLine(debugRect.getWidth() / 2.f, getHeight(), debugRect.getWidth() / 2.f, 0, 1.f); // Draw Vertical Line halfway in left component
+        g.drawLine(debugRect_2.getX() + (debugRect_2.getWidth() / 2), getHeight(), debugRect_2.getX() + (debugRect_2.getWidth() / 2), 0, 1.f); // Draw Vertical line halfway in right component
+
+        
+        for (int i = 0; i < rectangles.size(); i++)
+        {
+            g.setColour(juce::Colour(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
+            g.drawRect(rectangles[i]);
+        }
+    }
+
+    
 }
 
 
@@ -366,8 +414,10 @@ void CoveSplitGateAudioProcessorEditor::timerCallback() {
 
 void CoveSplitGateAudioProcessorEditor::resized()
 {
+    rectangles.clear();
     auto area = getBounds();
     auto verticalSegment = area.getHeight() / 8;
+
     auto logoBand = area.removeFromTop(verticalSegment);
     auto top = area.removeFromTop(verticalSegment);
     auto header = area.removeFromTop(verticalSegment);
@@ -381,6 +431,12 @@ void CoveSplitGateAudioProcessorEditor::resized()
     auto leftSide = area.removeFromLeft(area.getWidth() / 2);
     auto rightSide = area;
 
+    rectangles.push_back(leftHeader);
+    rectangles.push_back(rightHeader);
+    rectangles.push_back(topLeft);
+    rectangles.push_back(topRight);
+    rectangles.push_back(leftSide);
+    rectangles.push_back(rightSide);
 
 
     // Top
@@ -397,10 +453,15 @@ void CoveSplitGateAudioProcessorEditor::resized()
     crossoverSlider.setBounds(top.reduced(2));
 
     // Meter
+    /*
     lowMeterL.setBounds(leftHeader.removeFromTop(leftHeader.getHeight() / 2).reduced(2));
     lowMeterR.setBounds(leftHeader.reduced(2));
     highMeterL.setBounds(rightHeader.removeFromTop(rightHeader.getHeight() / 2).reduced(2));
     highMeterR.setBounds(rightHeader.reduced(2));
+    */
+    // Waveform
+    audioVisualizerLow.setBounds(leftHeader.removeFromTop(leftHeader.getHeight()).reduced(2));
+    audioVisualizerHigh.setBounds(rightHeader.removeFromTop(rightHeader.getHeight()).reduced(2));
 
     // Left
     const int amountOfLeftComponents = 5;
@@ -409,6 +470,7 @@ void CoveSplitGateAudioProcessorEditor::resized()
 
     for (int i = 0; i < amountOfLeftComponents; i++) {
         leftComponents[i] = leftSide.removeFromTop(heightLeftComponents);
+        rectangles.push_back(leftComponents[i]);
     }
     auto startingPos = 0;
 
@@ -425,6 +487,7 @@ void CoveSplitGateAudioProcessorEditor::resized()
 
     for (int i = 0; i < amountOfRightComponents; i++) {
         rightComponents[i] = rightSide.removeFromTop(heightRightComponents);
+        rectangles.push_back(rightComponents[i]);
     }
     
     highThresholdSlider.setBounds(rightComponents[startingPos]);
@@ -440,6 +503,7 @@ void CoveSplitGateAudioProcessorEditor::resized()
     std::array <juce::Rectangle<int>, jmax(amountOfLeftComponents, amountOfRightComponents) * 2> textComponents;
     for (int i = 0; i < textComponents.size(); i++) {
         textComponents[i] = bottomText.removeFromTop(heightTextComponents);
+        //rectangles.push_back(textComponents[i]);
     }
 
     thresholdLabel.setBounds(textComponents[startingPos * 2]);
@@ -456,6 +520,10 @@ void CoveSplitGateAudioProcessorEditor::resized()
     auto logoBandMiddle = logoBand.removeFromLeft(logoBandWidthInThird);
     auto logoBandRight = logoBand;
 
+    rectangles.push_back(logoBandLeft);
+    rectangles.push_back(logoBandMiddle);
+    rectangles.push_back(logoBandRight);
+
     //lowMuteButton.setBounds(bottomLeft.getX(), bottomLeft.getY(), 50,25);
     //lowMuteButton.setCentrePosition(bottomLeft.getCentre());
     coveLogoButton.setBounds(logoBandRight.reduced(20));
@@ -465,6 +533,7 @@ void CoveSplitGateAudioProcessorEditor::resized()
     versionLabel.setBounds(logoBandRight);
 
     splitLogoButton.setBounds(logoBandLeft);
+    advancedMenuButton.setBounds(logoBandMiddle.reduced(logoBandMiddle.getHeight() / 3));
     
     //highMuteButton.setBounds(bottomRight.getX(), bottomRight.getY(), 50, 25);
     //highMuteButton.setCentrePosition(bottomRight.getCentre());

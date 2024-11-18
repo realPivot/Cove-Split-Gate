@@ -2,8 +2,9 @@
 
 <JUCERPROJECT id="xsDr5n" name="Split Gate" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              companyName="Cove" pluginFormats="buildAAX,buildAU,buildVST3"
-              pluginDesc="Dual Band Gate" pluginName="Split Gate" version="0.95">
+              companyName="Cove" pluginFormats="buildAAX,buildAU,buildAUv3,buildStandalone,buildVST3"
+              pluginDesc="Dual Band Gate" pluginName="Split Gate" version="0.96"
+              companyWebsite="www.covedsp.com" companyEmail="contact@covedsp.com">
   <MAINGROUP id="jWMVt6" name="Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
       <GROUP id="{781E794C-21E6-7E7D-607F-DBD4E00228C4}" name="BinaryData">
@@ -18,9 +19,7 @@
                 file="Binaries/SVG/HighPassCurve.svg"/>
           <FILE id="wsVWAu" name="CrossoverCurve.svg" compile="0" resource="1"
                 file="Binaries/SVG/CrossoverCurve.svg"/>
-          <FILE id="zHOe73" name="COVELogo.svg" compile="0" resource="1" file="Binaries/SVG/COVELogo.svg"/>
-          <FILE id="rsGvTb" name="COVELogo_Bold.svg" compile="0" resource="1"
-                file="Binaries/SVG/COVELogo_Bold.svg"/>
+          <FILE id="XVjvIM" name="gear-solid.svg" compile="0" resource="1" file="Binaries/SVG/gear-solid.svg"/>
         </GROUP>
         <GROUP id="{55FA22CD-429B-2481-BEAB-4C9E193D9E5F}" name="Fonts">
           <FILE id="EHV1kR" name="NotoSans-ExtraBold.ttf" compile="0" resource="1"
@@ -38,7 +37,12 @@
         </GROUP>
       </GROUP>
       <GROUP id="{B82166A0-4F74-E4CF-A78D-242301A92CD2}" name="Components">
+        <FILE id="pO3c4d" name="SettingsMenu.h" compile="0" resource="0" file="Source/SettingsMenu.h"/>
         <FILE id="Z4imfG" name="Meter.h" compile="0" resource="0" file="Source/Meter.h"/>
+        <FILE id="gmeKI7" name="DummyProcessor.cpp" compile="1" resource="0"
+              file="Source/DummyProcessor.cpp"/>
+        <FILE id="q1P5cF" name="DummyProcessor.h" compile="0" resource="0"
+              file="Source/DummyProcessor.h"/>
       </GROUP>
       <FILE id="W8JGk9" name="CoveLookAndFeel.h" compile="0" resource="0"
             file="Source/CoveLookAndFeel.h"/>
@@ -73,7 +77,7 @@
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Cove Split Gate"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Cove Split Gate"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Split Gate"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../Juce Library/modules"/>
