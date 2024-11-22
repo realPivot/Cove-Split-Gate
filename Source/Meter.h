@@ -184,8 +184,8 @@ namespace Gui
 
 		void setThresholdValue(float value) {
 			thresholdValue = mapFromLog(value, Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.f));
-			DBG("Threshold Value: " + juce::String(thresholdValue));
-			DBG("jmapThresholdX: " + juce::String(thresholdX));
+			//DBG("Threshold Value: " + juce::String(thresholdValue));
+			//DBG("jmapThresholdX: " + juce::String(thresholdX));
 			//thresholdValue = value;
 		}
 

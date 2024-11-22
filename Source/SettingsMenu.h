@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include <../Source/PluginProcessor.h>
+#include <../Source/SliderUtils.h>
 
 //==============================================================================
 /*
@@ -19,48 +20,60 @@
 class SettingsMenu : public juce::PopupMenu::CustomComponent
 {
 public:
-    SettingsMenu(juce::AudioProcessorValueTreeState& vts) :
-        waveformGainAttach(*vts.getParameter("waveformGain"), waveformGainSlider)
+    SettingsMenu(juce::Value waveformGain) : waveformGainValue(waveformGain)
     {
-        addAndMakeVisible(waveformGainSlider);
-        waveformGainSlider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
-        waveformGainSlider.setTextBoxStyle(Slider::TextBoxRight, true, 25, 10);
-
+        initSlider(waveformGainSlider, waveformGainValue);
     }
 
     ~SettingsMenu() override
     {
     }
 
+    void getIdealSize(int& idealWidth, int& idealHeight) override {
+        idealWidth = 200;
+        idealHeight = 60;
+    }
+
     void paint (juce::Graphics& g) override
     {
-        /* This demo code just fills the component's background and
-           draws some placeholder text to get you started.
-
-           You should replace everything in this method with your own
-           drawing code..
-        */
-
-        g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
-        g.setColour (juce::Colours::grey);
-        g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
-        g.setColour (juce::Colours::white);
-        g.setFont (juce::FontOptions (14.0f));
-        g.drawText ("SettingsMenu", getLocalBounds(),
-                    juce::Justification::centred, true);   // draw some placeholder text
+        g.fillAll(juce::Colours::darkgrey);
+        g.setColour(juce::Colours::white);
+        //g.drawText("Settings Menu", getLocalBounds(), juce::Justification::centredTop, true);
     }
 
     void resized() override
     {
-        waveformGainSlider.setBounds(0,0, getWidth(), getHeight() / 3);
+        waveformGainSlider.setBounds(10,30, getWidth() - 20, 20);
+    }
+
+    void initSlider(juce::Slider& slider, juce::Value& value) {
+        addAndMakeVisible(slider);
+
+        //Slider Settings
+        slider.setSliderStyle(Slider::SliderStyle::LinearHorizontal);
+        slider.setTextBoxStyle(Slider::TextBoxRight, true, 50, 20);
+        slider.setNormalisableRange(logRange(Decibels::decibelsToGain(-30.0), Decibels::decibelsToGain(30.0)));
+
+        // Bind the slider to the Value
+        slider.getValueObject().referTo(value);
+
+        // Initialize slider position from the Value
+        slider.setValue(value.getValue());
+
+        // Update slider text based on slider value
+        slider.textFromValueFunction = [](double sliderVal)
+            {
+                return juce::String(Decibels::gainToDecibels(sliderVal), 5) + " dB";
+            };
+
+        // Update on creation
+        slider.updateText();
     }
 
 private:
 
     juce::Slider waveformGainSlider;
-    juce::SliderParameterAttachment waveformGainAttach;
+    juce::Value waveformGainValue;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SettingsMenu)
 };

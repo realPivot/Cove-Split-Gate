@@ -76,7 +76,7 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() { // Defau
 AudioProcessorValueTreeState::ParameterLayout createHiddenParameterLayout() { // Layout for non-automatable parameters
     std::vector < std::unique_ptr<RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<AudioParameterFloat>("waveformGain", "WaveformGain", 0.0, 10.0, 5.0));
+    params.push_back(std::make_unique<AudioParameterFloat>("waveformGain", "WaveformGain", Decibels::decibelsToGain(-30.0), Decibels::decibelsToGain(30.0), Decibels::decibelsToGain(5.0)));
     params.push_back(std::make_unique<AudioParameterFloat>("waveformStereo", "WaveformStereo", 0.0, 1.0, 1.0));
     params.push_back(std::make_unique<AudioParameterFloat>("waveformSpeed", "WaveformSpeed", 1.0, 4.0, 1.0));
 
@@ -231,8 +231,12 @@ void CoveSplitGateAudioProcessor::releaseResources()
 
 }
 
-AudioProcessorValueTreeState& CoveSplitGateAudioProcessor::getVts() {
-    return vts;
+AudioProcessorValueTreeState& CoveSplitGateAudioProcessor::getVts(bool shouldReturnHiddenVTS) {
+    if (!shouldReturnHiddenVTS)
+        return vts;
+
+    if (shouldReturnHiddenVTS)
+        return hiddenVts;
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

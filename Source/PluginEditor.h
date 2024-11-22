@@ -45,6 +45,7 @@ public:
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
     AudioProcessorValueTreeState& vts;
+    AudioProcessorValueTreeState& hiddenVts;
     CoveLookAndFeel coveLNF;
     ComponentBoundsConstrainer constrainer;
 
@@ -97,10 +98,8 @@ private:
 
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
-
-    //juce::Slider waveformGainSlider;
-    //juce::SliderParameterAttachment waveformGainAttach;
-
+    
+    juce::PopupMenu menu;
 
     juce::Label thresholdLabel{"ThresholdLabel", "Threshold"};
     juce::Label attackLabel{"AttackLabel", "Attack"};
@@ -116,6 +115,8 @@ private:
     std::unique_ptr<Drawable> cove_logo = juce::Drawable::createFromImageData(BinaryData::COVE_TextOnly_svg, BinaryData::COVE_TextOnly_svgSize);
     std::unique_ptr<Drawable> splitgate_logo = juce::Drawable::createFromImageData(BinaryData::SplitGate_Logo_svg, BinaryData::SplitGate_Logo_svgSize);
     std::unique_ptr<Drawable> gearIcon = juce::Drawable::createFromImageData(BinaryData::gearsolid_svg, BinaryData::gearsolid_svgSize);
+    
+    //std::unique_ptr<SettingsMenu> settingsMenu = std::make_unique<SettingsMenu>();
 
     juce::DrawableButton coveLogoButton;
     juce::DrawableButton splitLogoButton;

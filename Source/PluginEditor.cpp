@@ -15,7 +15,7 @@ typedef CoveSplitGateAudioProcessor::Band _Band;
 
 //==============================================================================
 CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGateAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p), vts(p.getVts()),
+    : AudioProcessorEditor(&p), audioProcessor(p), vts(p.getVts(false)), hiddenVts(p.getVts(true)),
     crossoverAttach(*vts.getParameter("crossover"), crossoverSlider),
     lowBypassAttach(*vts.getParameter("lowBypass"), lowBypassButton),
     lowThresholdAttach(*vts.getParameter("lowThreshold"), lowThresholdSlider),
@@ -62,6 +62,12 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     addAndMakeVisible(audioVisualizerHigh);
 
     startTimerHz(144); // how fast should rms value be updated for meters. Meter framerate updated in meter component.
+
+    //Menu
+    juce::Value waveformGainValue = hiddenVts.getParameterAsValue("waveformGain");
+
+    menu.addSectionHeader("Waveform Settings");
+    menu.addCustomItem(1, std::make_unique<SettingsMenu>(waveformGainValue));
 
     // Buttons
     addAndMakeVisible(lowBypassButton);
@@ -140,15 +146,16 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
         link.launchInDefaultBrowser();
         };
     
+
     addAndMakeVisible(advancedMenuButton);
     gearIcon->replaceColour(Colours::black, activeColours[3]);
     advancedMenuButton.setImages(gearIcon.get());
     advancedMenuButton.onClick = [this]() {
-        juce::PopupMenu menu;
-
-        menu.addSectionHeader("Waveform Settings");
-        menu.addCustomItem(0, std::make_unique<SettingsMenu>(vts), nullptr, "Settings Menu"); // THIS DOES NOT WORK. CAN NOT BUILD
-        menu.showMenuAsync(juce::PopupMenu::Options());
+        menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(getBoundsInParent()), 
+            [](int result) {
+                if (result == 1)
+                    DBG("SettingsMenu selected");
+            });
         };
 
     addAndMakeVisible(lowMuteButton);

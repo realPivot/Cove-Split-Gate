@@ -69,7 +69,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     float getRmsValue(Channel channel, Band band) const;
-    AudioProcessorValueTreeState& getVts();
+    AudioProcessorValueTreeState& getVts(bool shouldReturnHiddenVTS);
 
 private:
     ProcessSpec spec;

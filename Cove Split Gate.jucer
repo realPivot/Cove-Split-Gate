@@ -7,6 +7,7 @@
               companyWebsite="www.covedsp.com" companyEmail="contact@covedsp.com">
   <MAINGROUP id="jWMVt6" name="Split Gate">
     <GROUP id="{16503CBC-4420-228A-2955-DBAFAD3BEDDA}" name="Source">
+      <FILE id="STGciC" name="SliderUtils.h" compile="0" resource="0" file="Source/SliderUtils.h"/>
       <GROUP id="{781E794C-21E6-7E7D-607F-DBD4E00228C4}" name="BinaryData">
         <GROUP id="{03DECDBF-6050-4025-9BC2-50CE1B8C2349}" name="SVG">
           <FILE id="hq8HXS" name="SplitGate_Logo.svg" compile="0" resource="1"
