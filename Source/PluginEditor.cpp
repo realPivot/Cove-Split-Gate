@@ -34,8 +34,12 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     coveLogoButton("Cove Logo", juce::DrawableButton::ButtonStyle::ImageFitted),
     splitLogoButton("Split Gate Logo", juce::DrawableButton::ButtonStyle::ImageFitted),
     advancedMenuButton("Advanced Settings", juce::DrawableButton::ButtonStyle::ImageFitted),
-    audioVisualizerLow(2),
-    audioVisualizerHigh(2)
+    isStereo(*hiddenVts.getRawParameterValue("waveformStereo") > 0.5f ? true : false), // ternary to figure out if isStereo is on
+    audioVisualizerLow(getNumChannels()),
+    audioVisualizerHigh(getNumChannels()),
+    audioVisualizerPostGateLow(getNumChannels()),
+    audioVisualizerPostGateHigh(getNumChannels())
+    
 {
 
     //setLookAndFeel(&coveLNF);
@@ -52,22 +56,38 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     //setMeterStyle(lowMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
     //setMeterStyle(highMeterL, Gui::Meter::Horizontal, Gui::Meter::Left);
     //setMeterStyle(highMeterR, Gui::Meter::Horizontal, Gui::Meter::Left);
-    audioVisualizerLow.setBufferSize(512);
+
+    hiddenVts.addParameterListener("waveformSpeed", this);
+    hiddenVts.addParameterListener("waveformStereo", this);
+
+
     audioVisualizerLow.setSamplesPerBlock(p.getBlockSize());
-    audioVisualizerLow.setNumChannels(2);
-    addAndMakeVisible(audioVisualizerLow);
+    audioVisualizerLow.setColours(activeColours[3], activeColours[4]);
     
-    audioVisualizerHigh.setBufferSize(512);
+    
+    //audioVisualizerHigh.setBufferSize(512);
     audioVisualizerHigh.setSamplesPerBlock(p.getBlockSize());
+    audioVisualizerHigh.setColours(activeColours[3], activeColours[4]);
+
+    addAndMakeVisible(audioVisualizerLow);
     addAndMakeVisible(audioVisualizerHigh);
 
-    startTimerHz(144); // how fast should rms value be updated for meters. Meter framerate updated in meter component.
+    audioVisualizerPostGateLow.setColours(juce::Colours::transparentWhite, juce::Colour(activeColours[0]));
+    audioVisualizerPostGateHigh.setColours(juce::Colours::transparentWhite, juce::Colour(activeColours[0]));
 
-    //Menu
-    juce::Value waveformGainValue = hiddenVts.getParameterAsValue("waveformGain");
+    audioVisualizerPostGateLow.setOpaque(false);
+    audioVisualizerPostGateHigh.setOpaque(false);
 
-    menu.addSectionHeader("Waveform Settings");
-    menu.addCustomItem(1, std::make_unique<SettingsMenu>(waveformGainValue));
+    audioVisualizerPostGateHigh.setSamplesPerBlock(p.getBlockSize());
+    audioVisualizerPostGateLow.setSamplesPerBlock(p.getBlockSize());
+
+    addAndMakeVisible(audioVisualizerPostGateLow);
+    addAndMakeVisible(audioVisualizerPostGateHigh);
+
+    updateVisualizerSettings(*hiddenVts.getRawParameterValue("waveformSpeed"));
+    updateVisualizerSettings(isStereo);
+
+    startTimerHz(60); // how fast should rms value be updated for meters. Meter framerate updated in meter component.
 
     // Buttons
     addAndMakeVisible(lowBypassButton);
@@ -151,11 +171,10 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
     gearIcon->replaceColour(Colours::black, activeColours[3]);
     advancedMenuButton.setImages(gearIcon.get());
     advancedMenuButton.onClick = [this]() {
-        menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(getBoundsInParent()), 
-            [](int result) {
-                if (result == 1)
-                    DBG("SettingsMenu selected");
-            });
+        auto buttonBounds = advancedMenuButton.getBounds().reduced(7);
+        auto screenBounds = advancedMenuButton.getParentComponent()->localAreaToGlobal(buttonBounds);
+
+        showPersistentSettingsMenu(buttonBounds, screenBounds);
         };
 
     addAndMakeVisible(lowMuteButton);
@@ -214,19 +233,119 @@ CoveSplitGateAudioProcessorEditor::CoveSplitGateAudioProcessorEditor(CoveSplitGa
 CoveSplitGateAudioProcessorEditor::~CoveSplitGateAudioProcessorEditor()
 {
     LookAndFeel::setDefaultLookAndFeel(nullptr);
+    hiddenVts.removeParameterListener("waveformSpeed", this);
+    hiddenVts.removeParameterListener("waveformStereo", this);
 }
 
-void CoveSplitGateAudioProcessorEditor::updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band)
-{ // update the visualizer with buffer sent from audio processor
-    
-    switch (band) {
-    case GateBand::LowBand:
-        audioVisualizerLow.pushBuffer(buffer);
-        break;
-    case GateBand::HighBand:
-        audioVisualizerHigh.pushBuffer(buffer);
-        break;
+int CoveSplitGateAudioProcessorEditor::getNumChannels() {
+    return isStereo ? 2 : 1;
+}
+
+void CoveSplitGateAudioProcessorEditor::showPersistentSettingsMenu(juce::Rectangle<int> buttonPosition, juce::Rectangle<int> screenPosition)
+{
+
+    // Create the custom menu component
+    auto menuComponent = std::make_unique<SettingsMenu>(
+        hiddenVts.getParameterAsValue("waveformGain"), 
+        hiddenVts.getParameterAsValue("waveformStereo"), 
+        hiddenVts.getParameterAsValue("waveformSpeed"));
+    menuComponent.get()->setSize(150, 150);
+
+    // Create the CallOutBox
+    juce::CallOutBox& box = juce::CallOutBox::launchAsynchronously(
+        std::move(menuComponent),
+        screenPosition.translated(0, buttonPosition.getHeight()), // set position of calloutbox to screen position below the advanced menu button
+        nullptr);
+}
+
+void CoveSplitGateAudioProcessorEditor::updateVisualizerSettings(double value) {
+    audioVisualizerLow.setBufferSize(globalBufferSize / value);
+    audioVisualizerHigh.setBufferSize(globalBufferSize / value);
+    audioVisualizerPostGateHigh.setBufferSize(globalBufferSize / value);
+    audioVisualizerPostGateLow.setBufferSize(globalBufferSize / value);
+
+    audioVisualizerLow.clear();
+    audioVisualizerHigh.clear();
+    audioVisualizerPostGateLow.clear();
+    audioVisualizerPostGateHigh.clear();
+}
+
+void CoveSplitGateAudioProcessorEditor::updateVisualizerSettings(bool value) {
+    int numChannels = value ? 2 : 1;
+    audioVisualizerLow.setNumChannels(numChannels);
+    audioVisualizerHigh.setNumChannels(numChannels);
+    audioVisualizerPostGateHigh.setNumChannels(numChannels);
+    audioVisualizerPostGateLow.setNumChannels(numChannels);
+
+    audioVisualizerLow.clear();
+    audioVisualizerHigh.clear();
+    audioVisualizerPostGateLow.clear();
+    audioVisualizerPostGateHigh.clear();
+}
+
+void CoveSplitGateAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue) {
+    if (parameterID == "waveformSpeed") {
+        updateVisualizerSettings(newValue);
     }
+
+    if (parameterID == "waveformStereo") {
+        isStereo = newValue > 0.5f ? true : false; // set isStereo to true / false
+        updateVisualizerSettings(isStereo);
+    }
+}
+
+void CoveSplitGateAudioProcessorEditor::updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band, PreOrPost when)
+{ // update the visualizer with buffer sent from audio processor
+    juce::AudioBuffer<float> tempBuffer(buffer);
+
+    if (!isStereo) {
+        tempBuffer = convertToMono(tempBuffer);
+    }
+
+
+    if (when == PreOrPost::preGate) {
+        switch (band) {
+        case GateBand::LowBand:
+            audioVisualizerLow.pushBuffer(tempBuffer);
+            break;
+        case GateBand::HighBand:
+            audioVisualizerHigh.pushBuffer(tempBuffer);
+            break;
+        }
+    }
+    else if (when == PreOrPost::postGate)
+    {
+        switch (band) {
+        case GateBand::LowBand:
+            audioVisualizerPostGateLow.pushBuffer(tempBuffer);
+            break;
+        case GateBand::HighBand:
+            audioVisualizerPostGateHigh.pushBuffer(tempBuffer);
+            break;
+        }
+    }
+
+}
+
+
+juce::AudioBuffer<float> CoveSplitGateAudioProcessorEditor::convertToMono(juce::AudioBuffer<float>& stereoBuffer) {
+    // Check the number of channels in the stereo buffer
+    jassert(stereoBuffer.getNumChannels() >= 2); // Ensure it's at least stereo
+
+    juce::AudioBuffer<float> monoBuffer(1, stereoBuffer.getNumSamples()); // Instantiate monoBuffer
+
+    const int numSamples = stereoBuffer.getNumSamples();
+    auto* monoData = monoBuffer.getWritePointer(0); // Pointer to the mono channel data
+
+    const auto* leftChannel = stereoBuffer.getReadPointer(0); // Pointer to left channel
+    const auto* rightChannel = stereoBuffer.getReadPointer(1); // Pointer to right channel
+
+    for (int sample = 0; sample < numSamples; ++sample)
+    {
+        monoData[sample] = (leftChannel[sample] + rightChannel[sample]) * 0.5f; // Average for mono
+    }
+
+    return monoBuffer;
 }
 
 void CoveSplitGateAudioProcessorEditor::setMeterStyle(Gui::Meter& meter, Gui::Meter::MeterStyle style, Gui::Meter::FillDirection direction) 
@@ -468,7 +587,9 @@ void CoveSplitGateAudioProcessorEditor::resized()
     */
     // Waveform
     audioVisualizerLow.setBounds(leftHeader.removeFromTop(leftHeader.getHeight()).reduced(2));
+    audioVisualizerPostGateLow.setBounds(audioVisualizerLow.getBounds());
     audioVisualizerHigh.setBounds(rightHeader.removeFromTop(rightHeader.getHeight()).reduced(2));
+    audioVisualizerPostGateHigh.setBounds(audioVisualizerHigh.getBounds());
 
     // Left
     const int amountOfLeftComponents = 5;
@@ -540,7 +661,11 @@ void CoveSplitGateAudioProcessorEditor::resized()
     versionLabel.setBounds(logoBandRight);
 
     splitLogoButton.setBounds(logoBandLeft);
-    advancedMenuButton.setBounds(logoBandMiddle.reduced(logoBandMiddle.getHeight() / 3));
+    auto logoBandMiddleSize = logoBandMiddle.reduced(logoBandMiddle.getHeight() / 3);
+
+    advancedMenuButton.setSize(logoBandMiddleSize.getWidth(), logoBandMiddleSize.getHeight());
+
+    advancedMenuButton.setBounds(logoBandMiddleSize);
     
     //highMuteButton.setBounds(bottomRight.getX(), bottomRight.getY(), 50, 25);
     //highMuteButton.setCentrePosition(bottomRight.getCentre());

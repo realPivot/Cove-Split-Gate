@@ -30,6 +30,11 @@ public:
         right
     };
 
+    enum PreOrPost {
+        preGate,
+        postGate
+    };
+
 
     //==============================================================================
     CoveSplitGateAudioProcessor();
@@ -106,7 +111,7 @@ private:
 
     LinearSmoothedValue<float> lowBandRMSLeft, lowBandRMSRight, highBandRMSLeft, highBandRMSRight;
 
-    void pushBufferToVisualizer(const juce::AudioBuffer<float>& buffer, Band band);
+    void pushBufferToVisualizer(const juce::AudioBuffer<float>& buffer, Band band, PreOrPost when);
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoveSplitGateAudioProcessor)
 };

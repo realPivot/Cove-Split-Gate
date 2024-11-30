@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "math.h"
+#include "SliderUtils.h"
 
 
 float calcLogSkew(float min, float max) // skew factor algorithm from jucestepbystep.wordpress.com/logarithmic-sliders/
@@ -30,7 +31,9 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() { // Defau
 
     std::vector < std::unique_ptr<RangedAudioParameter>> params;
 
-    auto frequencyAttribute = AudioParameterFloatAttributes();
+    juce::AudioParameterFloatAttributes frequencyAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) {
+        return juce::String(double(x), 2, false);
+        });
 
     auto timeAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { 
         if (x < 10) {
@@ -50,10 +53,14 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() { // Defau
 
     auto bypassAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "On" : "Off"; });
 
+    auto ratioAttribute = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) {
+        return juce::String(double(x), 2, false);
+        });
+
     auto muteAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "Mute" : "Disabled"; });
 
 
-
+    /*
     params.push_back(std::make_unique<AudioParameterFloat>("crossover", "Crossover Frequency", juce::NormalisableRange<float>(20.f, 20000.f, .01f, calcLogSkew(50.f, 20000.f)), 1000.f, frequencyAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("lowBypass", "Low Enable", 0, bypassAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(ratioLow, ratioHigh / 4)), 4.0f, " / 1"));
@@ -62,23 +69,34 @@ AudioProcessorValueTreeState::ParameterLayout createParameterLayout() { // Defau
     params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .001f, calcLogSkew(holdLow + 1.f, holdHigh / 2)), 1.f, timeAttribute));
     params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("lowMute", "Low Mute", 0, muteAttribute));
+    */
+
+    params.push_back(std::make_unique<AudioParameterFloat>("crossover", "Crossover Frequency", logRange(20.f, 20000.f), 633.f, frequencyAttribute));
+    params.push_back(std::make_unique<AudioParameterBool>("lowBypass", "Low Enable", 0, bypassAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowRatio", "Low Ratio", logRange(ratioLow, ratioHigh), 4.0f, ratioAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowAttack", "Low Attack", logRange(attackMsMin, attackMsMax), 5.f, timeAttribute)); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("lowRelease", "Low Release", logRange(releaseMsMin, releaseMsMax), 100.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowHold", "Low Hold", logRange(holdLow, holdHigh), 1.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("lowThreshold", "Low Threshold", logRange(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterBool>("lowMute", "Low Mute", 0, muteAttribute));
 
     params.push_back(std::make_unique<AudioParameterBool>("highBypass", "High Enable", 0, bypassAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", juce::NormalisableRange<float>(ratioLow, ratioHigh, 0.1f, calcLogSkew(ratioLow, ratioHigh / 4)), 4.0f, " / 1"));
-    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", juce::NormalisableRange<float>(attackMsMin, attackMsMax, .001f, calcLogSkew(attackMsMin, attackMsMax / 2)), 5.f, timeAttribute)); // divide attackMsMax by 2 to make skew less aggressive
-    params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", juce::NormalisableRange<float>(releaseMsMin, releaseMsMax, .001f, calcLogSkew(releaseMsMin, releaseMsMax / 2)), 100.f, timeAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", juce::NormalisableRange<float>(holdLow, holdHigh, .001f, calcLogSkew(holdLow+1.f, holdHigh / 2)), 1.f, timeAttribute));
-    params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", juce::NormalisableRange<float>(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f), .000001f, calcLogSkew(0.1f, 112.1f)), 1.f, thresholdAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highRatio", "High Ratio", logRange(ratioLow, ratioHigh), 4.0f, ratioAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highAttack", "High Attack", logRange(attackMsMin, attackMsMax), 5.f, timeAttribute)); // divide attackMsMax by 2 to make skew less aggressive
+    params.push_back(std::make_unique<AudioParameterFloat>("highRelease", "High Release", logRange(releaseMsMin, releaseMsMax), 100.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highHold", "High Hold", logRange(holdLow, holdHigh), 1.f, timeAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("highThreshold", "High Threshold", logRange(Decibels::decibelsToGain(-80.f), Decibels::decibelsToGain(12.0f)), 1.f, thresholdAttribute));
     params.push_back(std::make_unique<AudioParameterBool>("highMute", "High Mute", 0, muteAttribute));
     return { params.begin(), params.end() };
 }
 
 AudioProcessorValueTreeState::ParameterLayout createHiddenParameterLayout() { // Layout for non-automatable parameters
     std::vector < std::unique_ptr<RangedAudioParameter>> params;
+    auto bypassAttribute = AudioParameterBoolAttributes().withStringFromValueFunction([](auto x, auto) { return x ? "On" : "Off"; });
 
-    params.push_back(std::make_unique<AudioParameterFloat>("waveformGain", "WaveformGain", Decibels::decibelsToGain(-30.0), Decibels::decibelsToGain(30.0), Decibels::decibelsToGain(5.0)));
-    params.push_back(std::make_unique<AudioParameterFloat>("waveformStereo", "WaveformStereo", 0.0, 1.0, 1.0));
-    params.push_back(std::make_unique<AudioParameterFloat>("waveformSpeed", "WaveformSpeed", 1.0, 4.0, 1.0));
+    params.push_back(std::make_unique<AudioParameterFloat>("waveformGain", "WaveformGain", Decibels::decibelsToGain(-25.0), Decibels::decibelsToGain(50.0), Decibels::decibelsToGain(25.0)));
+    params.push_back(std::make_unique<AudioParameterBool>("waveformStereo", "WaveformStereo", false, bypassAttribute));
+    params.push_back(std::make_unique<AudioParameterFloat>("waveformSpeed", "WaveformSpeed", logRange(0.1f, 4.0f), 1.0f));
 
     return { params.begin(), params.end() };
 }
@@ -368,8 +386,8 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         tempHighGateBuffer.applyGain(waveformGain->load());
     }
 
-    pushBufferToVisualizer(tempLowGateBuffer, Band::low);
-    pushBufferToVisualizer(tempHighGateBuffer, Band::high);
+    pushBufferToVisualizer(tempLowGateBuffer, Band::low, PreOrPost::preGate);
+    pushBufferToVisualizer(tempHighGateBuffer, Band::high, PreOrPost::preGate);
 
     // Process Expanders
     if (*lowBypass > 0.5f) { lowGate.process(lowGateBuffer); }
@@ -378,6 +396,22 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     fb0Context.getOutputBlock().copyFrom(lowGateBuffer);
     fb1Context.getOutputBlock().copyFrom(highGateBuffer);
 
+    //tempLowGateBuffer.clear();
+
+    /*
+    for (int i = 0; i < tempLowGateBuffer.getNumChannels(); i++) {
+        tempLowGateBuffer.copyFrom(i, 0, lowGateBuffer, i, 0, lowGateBuffer.getNumSamples());
+        tempHighGateBuffer.copyFrom(i, 0, highGateBuffer, i, 0, highGateBuffer.getNumSamples());
+    }
+
+    if (waveformGain != nullptr) {
+        tempLowGateBuffer.applyGain(waveformGain->load());
+        tempHighGateBuffer.applyGain(waveformGain->load());
+    }
+
+    pushBufferToVisualizer(tempLowGateBuffer, Band::low, PreOrPost::postGate);
+    pushBufferToVisualizer(tempHighGateBuffer, Band::high, PreOrPost::postGate);
+    */
     buffer.clear();
 
     // sum filters back together
@@ -390,22 +424,53 @@ void CoveSplitGateAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         };
 
     
-    if (*lowMute < 0.5f) addFilterBand(buffer, filterBuffers[0]); // add low band to output buffer if mute is not enabled
-    if (*highMute < 0.5f) addFilterBand(buffer, filterBuffers[1]); // add high band to output buffer if mute is not enabled
+    if (*lowMute < 0.5f) {
+        addFilterBand(buffer, filterBuffers[0]); // add low band to output buffer if mute is not enabled
+        if (waveformGain != nullptr) filterBuffers[0].applyGain(waveformGain->load());
+        pushBufferToVisualizer(filterBuffers[0], Band::low, PreOrPost::postGate);
+    }
+    else
+    {
+        filterBuffers[0].applyGain(Decibels::decibelsToGain(-300.0f));
+        pushBufferToVisualizer(filterBuffers[0], Band::low, PreOrPost::postGate);
+    }
+    if (*highMute < 0.5f) {
+        addFilterBand(buffer, filterBuffers[1]); // add high band to output buffer if mute is not enabled
+        if (waveformGain != nullptr) filterBuffers[1].applyGain(waveformGain->load());
+        pushBufferToVisualizer(filterBuffers[1], Band::high, PreOrPost::postGate);
+    }
+    else {
+        filterBuffers[1].applyGain(Decibels::decibelsToGain(-300.0f));
+        pushBufferToVisualizer(filterBuffers[1], Band::high, PreOrPost::postGate);
+    }
     
 }
 
-void CoveSplitGateAudioProcessor::pushBufferToVisualizer(const juce::AudioBuffer<float>& buffer, Band band) {
+void CoveSplitGateAudioProcessor::pushBufferToVisualizer(const juce::AudioBuffer<float>& buffer, Band band, PreOrPost when) {
     if (auto* editor = dynamic_cast<CoveSplitGateAudioProcessorEditor*>(this->getActiveEditor())) // if editor exists
     {
-        switch (band) { // check which band we are pushing buffer to
-        case Band::low:
-            editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::LowBand); // push relevant buffer
-            break;
-        case Band::high:
-            editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::HighBand); // push relevant buffer
-            break;
+        if (when == PreOrPost::preGate) {
+            switch (band) { // check which band we are pushing buffer to
+            case Band::low:
+                editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::LowBand, CoveSplitGateAudioProcessorEditor::preGate); // push relevant buffer
+                break;
+            case Band::high:
+                editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::HighBand, CoveSplitGateAudioProcessorEditor::preGate); // push relevant buffer
+                break;
+            }
         }
+        else if (when == PreOrPost::postGate)
+        {
+            switch (band) { // check which band we are pushing buffer to
+            case Band::low:
+                editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::LowBand, CoveSplitGateAudioProcessorEditor::postGate); // push relevant buffer
+                break;
+            case Band::high:
+                editor->updateVisualizer(buffer, CoveSplitGateAudioProcessorEditor::GateBand::HighBand, CoveSplitGateAudioProcessorEditor::postGate); // push relevant buffer
+                break;
+            }
+        }
+
     }
 }
 

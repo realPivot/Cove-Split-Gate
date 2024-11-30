@@ -38,6 +38,8 @@
         </GROUP>
       </GROUP>
       <GROUP id="{B82166A0-4F74-E4CF-A78D-242301A92CD2}" name="Components">
+        <FILE id="haeFBf" name="TransparentVisualizer.h" compile="0" resource="0"
+              file="Source/TransparentVisualizer.h"/>
         <FILE id="pO3c4d" name="SettingsMenu.h" compile="0" resource="0" file="Source/SettingsMenu.h"/>
         <FILE id="Z4imfG" name="Meter.h" compile="0" resource="0" file="Source/Meter.h"/>
         <FILE id="gmeKI7" name="DummyProcessor.cpp" compile="1" resource="0"

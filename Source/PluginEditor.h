@@ -14,17 +14,26 @@
 #include "CoveLookAndFeel.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "SettingsMenu.h"
+#include "TransparentVisualizer.h"
 
 //==============================================================================
 /**
 */
-class CoveSplitGateAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
+class CoveSplitGateAudioProcessorEditor  :  public juce::AudioProcessorEditor, 
+                                            public juce::Timer, 
+                                            public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     enum GateBand
     {
         LowBand,
         HighBand
+    };
+
+    enum PreOrPost
+    {
+        preGate,
+        postGate
     };
 
     CoveSplitGateAudioProcessorEditor (CoveSplitGateAudioProcessor&);
@@ -40,7 +49,19 @@ public:
 
     void setColoursForLNF(CoveLookAndFeel& lnf);
 
-    void updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band);
+    void updateVisualizer(const juce::AudioBuffer<float>& buffer, GateBand band, PreOrPost when);
+
+    void showPersistentSettingsMenu(juce::Rectangle<int> buttonPosition, juce::Rectangle<int> screenPosition);
+
+    void updateVisualizerSettings(double value);
+
+    void updateVisualizerSettings(bool value);
+
+    void parameterChanged(const String& parameterID, float newValue) override;
+
+    juce::AudioBuffer<float> convertToMono(juce::AudioBuffer<float>& stereoBuffer);
+
+    int getNumChannels();
 
 private:
     CoveSplitGateAudioProcessor& audioProcessor;
@@ -51,6 +72,7 @@ private:
 
     Gui::Meter lowMeterL, lowMeterR, highMeterL, highMeterR;
     juce::AudioVisualiserComponent audioVisualizerLow, audioVisualizerHigh;
+    juce::AudioVisualiserComponent audioVisualizerPostGateLow, audioVisualizerPostGateHigh;
 
     juce::Rectangle<int> debugRect, debugRect_2;
 
@@ -98,8 +120,7 @@ private:
 
     juce::Slider highHoldSlider;
     juce::SliderParameterAttachment highHoldAttach;
-    
-    juce::PopupMenu menu;
+
 
     juce::Label thresholdLabel{"ThresholdLabel", "Threshold"};
     juce::Label attackLabel{"AttackLabel", "Attack"};
@@ -142,9 +163,12 @@ private:
 
     const std::array<juce::Colour, 5> activeColours{_Isabelline, _PaleDogwood, _RoseQuartz, _UltraViolet, _SpaceCadet};
 
-    bool debug = true;
+    bool debug = false;
+    bool isStereo;
 
     std::vector<juce::Rectangle<int>> rectangles;
+
+    const int globalBufferSize = 256;
 
     void setMeterStyle(Gui::Meter& meter, Gui::Meter::MeterStyle style, Gui::Meter::FillDirection direction);
     //void setButtonStyle(juce::Button& button);
